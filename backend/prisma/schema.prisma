@@ -11,8 +11,15 @@ enum Role {
   CUSTOMER
 }
 
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model User {
-  id        String   @id @default(uuid()) // Can match Supabase auth ID
+  id        String   @id @default(uuid())
   email     String   @unique
   name      String?
   role      Role     @default(FREELANCER)
@@ -24,15 +31,19 @@ model User {
 }
 
 model FreelancerProfile {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio         String?
-  hourlyRate  Float?
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio          String?
+  hourlyRate   Float?
   portfolioUrl String?
-  skills      Skill[]  @relation("FreelancerSkills")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  skills       Skill[]  @relation("FreelancerSkills")
+  
+  assignedJobs Job[]    @relation("AssignedFreelancer")
+  reviews      Review[] @relation("ReceivedReviews")
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model CustomerProfile {
@@ -40,21 +51,50 @@ model CustomerProfile {
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   company   String?
-  jobs      Job[]
+  
+  jobs      Job[]    @relation("CustomerJobs")
+  reviews   Review[] @relation("GivenReviews")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Job {
-  id              String   @id @default(uuid())
-  customerId      String
-  customer        CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  title           String
-  description     String
-  budget          Float?
-  requiredSkills  Skill[]  @relation("JobSkills")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             String          @id @default(uuid())
+  
+  customerId     String
+  customer       CustomerProfile @relation("CustomerJobs", fields: [customerId], references: [id], onDelete: Cascade)
+  
+  freelancerId   String?
+  freelancer     FreelancerProfile? @relation("AssignedFreelancer", fields: [freelancerId], references: [id])
+
+  title          String
+  description    String
+  budget         Float?
+  status         JobStatus       @default(OPEN)
+
+  requiredSkills Skill[]         @relation("JobSkills")
+  review         Review?
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  score        Int
+  comment      String?
+  
+  jobId        String   @unique
+  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  reviewerId   String
+  reviewer     CustomerProfile @relation("GivenReviews", fields: [reviewerId], references: [id])
+  
+  revieweeId   String
+  reviewee     FreelancerProfile @relation("ReceivedReviews", fields: [revieweeId], references: [id])
+  
+  createdAt    DateTime @default(now())
 }
 
 model Skill {
