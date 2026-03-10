@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum Role {
+  FREELANCER
+  CUSTOMER
+}
+
+model User {
+  id        String   @id @default(uuid()) // Can match Supabase auth ID
+  email     String   @unique
+  name      String?
+  role      Role     @default(FREELANCER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  freelancerProfile FreelancerProfile?
+  customerProfile   CustomerProfile?
+}
+
+model FreelancerProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio         String?
+  hourlyRate  Float?
+  portfolioUrl String?
+  skills      Skill[]  @relation("FreelancerSkills")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CustomerProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   String?
+  jobs      Job[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id              String   @id @default(uuid())
+  customerId      String
+  customer        CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  budget          Float?
+  requiredSkills  Skill[]  @relation("JobSkills")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Skill {
+  id          String              @id @default(uuid())
+  name        String              @unique
+  freelancers FreelancerProfile[] @relation("FreelancerSkills")
+  jobs        Job[]               @relation("JobSkills")
+}
