@@ -1,4 +1,4 @@
-# Jobio 🚀 | Yapay Zekâ Destekli Freelancer Eşleştirme Platformu
+# Jobio 🚀 | Yapay Zeka Destekli Freelancer Eşleştirme Platformu
 
 Jobio, yetenekli freelancer'lar ile doğru müşterileri bir araya getiren, modern, ölçeklenebilir ve yapay zekâ (AI) destekli bir platformdur. Klasik filtreleme yöntemlerinin ötesine geçerek, müşteri taleplerini semantik olarak analiz eder ve en uygun uzmanları saniyeler içinde önerir.
 
