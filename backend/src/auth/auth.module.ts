@@ -9,6 +9,6 @@ import { AuthController } from './auth.controller';
   imports: [PassportModule, SupabaseModule],
   controllers: [AuthController],
   providers: [JwtStrategy, AuthService],
-  exports: [JwtStrategy, AuthService],
+  exports: [JwtStrategy, AuthService, PassportModule, SupabaseModule],
 })
 export class AuthModule {}
