@@ -7,6 +7,8 @@ import { SupabaseModule } from './supabase/supabase.module';
 import { AuthModule } from './auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { StorageModule } from './storage/storage.module';
+import { JobsModule } from './jobs/jobs.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { StorageModule } from './storage/storage.module';
     PrismaModule,
     AuthModule,
     StorageModule,
+    JobsModule,
+    ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
