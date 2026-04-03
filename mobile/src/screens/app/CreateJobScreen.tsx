@@ -41,7 +41,7 @@ export const CreateJobScreen = ({ navigation }: any) => {
           text: 'Tamam', 
           onPress: () => {
             reset();
-            navigation.navigate('Home');
+            navigation.navigate('TabHome');
           } 
         }
       ]);

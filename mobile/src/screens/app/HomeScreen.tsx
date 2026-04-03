@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
@@ -21,21 +22,19 @@ export const HomeScreen = ({ navigation }: any) => {
     }
   };
 
-  const loadInitialData = async () => {
-    setIsLoading(true);
-    await fetchJobs();
-    setIsLoading(false);
-  };
-
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await fetchJobs();
     setIsRefreshing(false);
   }, []);
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchJobs().finally(() => {
+        setIsLoading(false);
+      });
+    }, [])
+  );
 
   const renderJobCard = ({ item }: { item: any }) => (
     <TouchableOpacity 
