@@ -5,6 +5,8 @@ interface User {
   id: string;
   email: string;
   role: string | null;
+  avatarUrl?: string | null;
+  cvUrl?: string | null;
 }
 
 interface AuthState {
@@ -15,9 +17,10 @@ interface AuthState {
   setAuth: (user: User, token: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  updateUserProfile: (updates: Partial<User>) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
@@ -52,6 +55,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     } catch (e) {
       set({ isLoading: false });
+    }
+  },
+
+  updateUserProfile: async (updates) => {
+    const currentState = get();
+    if (currentState.user) {
+      const updatedUser = { ...currentState.user, ...updates };
+      await SecureStore.setItemAsync('user_data', JSON.stringify(updatedUser));
+      set({ user: updatedUser });
     }
   },
 }));
