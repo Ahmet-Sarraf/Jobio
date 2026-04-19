@@ -1,17 +1,20 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
 import { api } from '../../services/api';
-import { Briefcase, DollarSign, ChevronRight } from 'lucide-react-native';
+import { Briefcase, DollarSign, ChevronRight, Search, ArrowDown01, ArrowUp10 } from 'lucide-react-native';
 
 export const HomeScreen = ({ navigation }: any) => {
   const user = useAuthStore((state) => state.user);
   const [jobs, setJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
 
   const fetchJobs = async () => {
     try {
@@ -35,6 +38,30 @@ export const HomeScreen = ({ navigation }: any) => {
       });
     }, [])
   );
+
+  const filteredAndSortedJobs = useMemo(() => {
+    let result = [...jobs];
+
+    if (searchQuery.trim() !== '') {
+      result = result.filter(job => 
+        job.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (sortOrder === 'asc') {
+      result.sort((a, b) => (Number(a.budget) || 0) - (Number(b.budget) || 0));
+    } else if (sortOrder === 'desc') {
+      result.sort((a, b) => (Number(b.budget) || 0) - (Number(a.budget) || 0));
+    }
+
+    return result;
+  }, [jobs, searchQuery, sortOrder]);
+
+  const toggleSortOrder = () => {
+    if (sortOrder === null) setSortOrder('desc');
+    else if (sortOrder === 'desc') setSortOrder('asc');
+    else setSortOrder(null);
+  };
 
   const renderJobCard = ({ item }: { item: any }) => (
     <TouchableOpacity 
@@ -77,8 +104,31 @@ export const HomeScreen = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <View style={styles.searchContainer}>
+          <Search size={20} color={colors.textSecondary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="İlan ara..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
+        <TouchableOpacity 
+          style={[styles.sortButton, sortOrder && styles.sortButtonActive]} 
+          onPress={toggleSortOrder}
+        >
+          {sortOrder === 'asc' ? (
+            <ArrowUp10 size={20} color={sortOrder ? colors.primary : colors.textSecondary} />
+          ) : (
+            <ArrowDown01 size={20} color={sortOrder ? colors.primary : colors.textSecondary} />
+          )}
+        </TouchableOpacity>
+      </View>
+
       <FlatList
-        data={jobs}
+        data={filteredAndSortedJobs}
         keyExtractor={(item) => item.id.toString()}
         renderItem={renderJobCard}
         contentContainerStyle={styles.listContainer}
@@ -94,7 +144,7 @@ export const HomeScreen = ({ navigation }: any) => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Briefcase size={48} color={colors.border} />
-            <Text style={styles.emptyText}>Henüz açık iş ilanı bulunmuyor.</Text>
+            <Text style={styles.emptyText}>Arama kriterlerinize uygun ilan bulunamadı.</Text>
           </View>
         }
       />
@@ -110,6 +160,56 @@ const styles = StyleSheet.create({
   center: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
+  },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: spacing.sm,
+    paddingHorizontal: spacing.md,
+    height: 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    marginRight: spacing.md,
+  },
+  searchIcon: {
+    marginRight: spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: typography.sizes.md,
+    color: colors.text,
+    height: '100%',
+  },
+  sortButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#fff',
+    borderRadius: spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  sortButtonActive: {
+    borderColor: colors.primary,
+    backgroundColor: 'rgba(56, 189, 248, 0.05)',
   },
   listContainer: {
     padding: spacing.lg,
