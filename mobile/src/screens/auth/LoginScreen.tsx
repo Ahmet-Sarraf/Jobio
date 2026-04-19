@@ -49,6 +49,8 @@ export const LoginScreen = ({ navigation }: any) => {
         id: session.user.id,
         email: session.user.email,
         role: session.user.user_metadata?.user_role || null,
+        avatarUrl: session.user.user_metadata?.avatarUrl || null,
+        cvUrl: session.user.user_metadata?.cvUrl || null,
       };
 
       await setAuth(userObj, token);
