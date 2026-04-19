@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   StyleSheet,
   TouchableOpacityProps,
+  View,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing, typography } from '../theme/spacing';
@@ -13,12 +14,14 @@ interface ButtonProps extends TouchableOpacityProps {
   title: string;
   variant?: 'primary' | 'secondary' | 'outline';
   loading?: boolean;
+  icon?: React.ReactNode;
 }
 
 export const Button = ({
   title,
   variant = 'primary',
   loading = false,
+  icon,
   style,
   disabled,
   ...props
@@ -50,7 +53,10 @@ export const Button = ({
       {loading ? (
         <ActivityIndicator color={getTextColor()} />
       ) : (
-        <Text style={[styles.text, { color: getTextColor() }]}>{title}</Text>
+        <>
+          {icon && <View style={styles.iconContainer}>{icon}</View>}
+          {title ? <Text style={[styles.text, { color: getTextColor() }]}>{title}</Text> : null}
+        </>
       )}
     </TouchableOpacity>
   );
@@ -60,10 +66,14 @@ const styles = StyleSheet.create({
   button: {
     height: 48,
     borderRadius: 8,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
     marginVertical: spacing.sm,
+  },
+  iconContainer: {
+    marginRight: spacing.xs,
   },
   outline: {
     borderWidth: 1,

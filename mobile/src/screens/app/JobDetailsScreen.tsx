@@ -1,12 +1,48 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
-import { Briefcase, DollarSign, User, Calendar } from 'lucide-react-native';
+import { Briefcase, DollarSign, User as UserIcon, Calendar, CheckCircle } from 'lucide-react-native';
 import { Button } from '../../components/Button';
+import { useAuthStore } from '../../store/useAuthStore';
+import { api } from '../../services/api';
 
 export const JobDetailsScreen = ({ route, navigation }: any) => {
   const { job } = route.params;
+  const user = useAuthStore(state => state.user);
+  const [isApplying, setIsApplying] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
+
+  const handleApply = async () => {
+    if (!user?.cvUrl) {
+      Alert.alert(
+        'CV Eksik',
+        'Bu ilana başvurabilmek için profilinizden CV yüklemeniz gerekmektedir.',
+        [
+          { text: 'İptal', style: 'cancel' },
+          { text: 'Profile Git', onPress: () => navigation.navigate('Profile') }
+        ]
+      );
+      return;
+    }
+
+    try {
+      setIsApplying(true);
+      // Backend entegrasyonu hazır olmadığında mock call olarak kullanılabilir.
+      // Eger backend hazırsa burayı açabilirsiniz.
+      // await api.post(`/jobs/${job.id}/apply`, { cvUrl: user.cvUrl });
+      
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      setHasApplied(true);
+      Alert.alert('Başarılı', 'Başvurunuz başarıyla alındı!');
+    } catch (error) {
+      Alert.alert('Hata', 'Başvuru sırasında bir hata oluştu.');
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -33,7 +69,7 @@ export const JobDetailsScreen = ({ route, navigation }: any) => {
         </View>
 
         <View style={styles.infoRow}>
-          <User size={20} color={colors.textSecondary} />
+          <UserIcon size={20} color={colors.textSecondary} />
           <Text style={styles.infoLabel}>Müşteri ID:</Text>
           <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="middle">
             {job.customerId || 'Bilinmiyor'}
@@ -49,8 +85,22 @@ export const JobDetailsScreen = ({ route, navigation }: any) => {
         </View>
       </View>
 
-      {/* İleride "Başvur" veya benzeri aksiyon butonları eklenebilir */}
       <View style={styles.actionContainer}>
+        {hasApplied ? (
+          <View style={styles.appliedBanner}>
+            <CheckCircle size={20} color="#34c759" />
+            <Text style={styles.appliedText}>Bu ilana başvurdunuz</Text>
+          </View>
+        ) : (
+          <Button 
+            title="Bu İlana Başvur" 
+            variant="primary" 
+            onPress={handleApply} 
+            loading={isApplying}
+            style={styles.applyButton}
+            disabled={job.status && job.status !== 'OPEN'}
+          />
+        )}
         <Button 
           title="Geri Dön" 
           variant="outline" 
@@ -147,7 +197,28 @@ const styles = StyleSheet.create({
   actionContainer: {
     marginTop: spacing.md,
   },
+  applyButton: {
+    width: '100%',
+    marginBottom: spacing.md,
+  },
   backButton: {
     width: '100%',
+  },
+  appliedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+    padding: spacing.md,
+    borderRadius: spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(52, 199, 89, 0.3)',
+    marginBottom: spacing.md,
+  },
+  appliedText: {
+    marginLeft: spacing.sm,
+    color: '#34c759',
+    fontWeight: '600',
+    fontSize: typography.sizes.md,
   },
 });
