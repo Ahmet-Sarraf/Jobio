@@ -5,6 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
 import { useAuthStore } from '../../store/useAuthStore';
+import { api } from '../../services/api';
 import { Button } from '../../components/Button';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
@@ -80,16 +81,9 @@ export const ProfileScreen = () => {
 
         const publicUrl = await uploadToSupabase('avatars', fileName, asset.uri, contentType);
         await deleteOldFile('avatars', user?.avatarUrl);
-        await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
-            },
-            body: JSON.stringify({ data: { avatarUrl: publicUrl } })
-        });
         await updateUserProfile({ avatarUrl: publicUrl });
+        // DB'ye kaydet — tüm cihazlar görebilsin
+        await api.patch('/users/me', { avatarUrl: publicUrl });
         Alert.alert('Başarılı', 'Profil fotoğrafınız güncellendi.');
       }
     } catch (error) {
@@ -115,16 +109,9 @@ export const ProfileScreen = () => {
 
         const publicUrl = await uploadToSupabase('documents', fileName, asset.uri, contentType);
         await deleteOldFile('documents', user?.cvUrl);
-        await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
-            },
-            body: JSON.stringify({ data: { cvUrl: publicUrl } })
-        });
         await updateUserProfile({ cvUrl: publicUrl });
+        // DB'ye kaydet — tüm cihazlar görebilsin
+        await api.patch('/users/me', { cvUrl: publicUrl });
         Alert.alert('Başarılı', 'CV başarıyla yüklendi.');
       }
     } catch (error) {

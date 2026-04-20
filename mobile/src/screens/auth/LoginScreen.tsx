@@ -21,6 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export const LoginScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
+  const updateUserProfile = useAuthStore((state) => state.updateUserProfile);
 
   const {
     control,
@@ -37,7 +38,6 @@ export const LoginScreen = ({ navigation }: any) => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setLoading(true);
-      // Assuming your backend returns { access_token: string, user: User }
       const response = await api.post('/auth/login', {
         email: data.email,
         password: data.password,
@@ -49,11 +49,24 @@ export const LoginScreen = ({ navigation }: any) => {
         id: session.user.id,
         email: session.user.email,
         role: session.user.user_metadata?.user_role || null,
-        avatarUrl: session.user.user_metadata?.avatarUrl || null,
-        cvUrl: session.user.user_metadata?.cvUrl || null,
+        avatarUrl: null as string | null,
+        cvUrl: null as string | null,
       };
 
+      // Önce temel auth bilgisini kaydet
       await setAuth(userObj, token);
+
+      // Ardından backend'den DB'deki güncel profil verisini çek (avatarUrl, cvUrl)
+      try {
+        const profileRes = await api.get('/users/me');
+        await updateUserProfile({
+          avatarUrl: profileRes.data.avatarUrl ?? undefined,
+          cvUrl: profileRes.data.cvUrl ?? undefined,
+          name: profileRes.data.name ?? undefined,
+        });
+      } catch {
+        // Profil çekilemezse sessizce devam et
+      }
       
     } catch (error: any) {
       console.log('Login Error: ', error.response?.data || error.message);

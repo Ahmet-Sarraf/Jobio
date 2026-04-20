@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 interface User {
   id: string;
   email: string;
+  name?: string | null;
   role: string | null;
   avatarUrl?: string | null;
   cvUrl?: string | null;
