@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { StorageModule } from './storage/storage.module';
 import { JobsModule } from './jobs/jobs.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ReviewsModule } from './reviews/reviews.module';
     StorageModule,
     JobsModule,
     ReviewsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
