@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Briefcase, Mail, Lock, User } from 'lucide-react';
+import { Briefcase, Mail, Lock, User, Building, Laptop } from 'lucide-react';
 import api from '@/lib/axios';
 
 export default function RegisterPage() {
@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'FREELANCER' | 'CUSTOMER'>('FREELANCER');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +21,7 @@ export default function RegisterPage() {
       setLoading(true);
       setError('');
       // Adjust endpoint matching your NestJS backend
-      await api.post('/auth/register', { name, email, password });
+      await api.post('/auth/register', { name, email, password, role });
       
       // On success, redirect to login
       router.push('/login');
@@ -50,6 +51,38 @@ export default function RegisterPage() {
               <p className="text-sm font-medium text-red-800">{error}</p>
             </div>
           )}
+
+          {/* Role Selection */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-700">
+              Kullanım Amacı
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <div
+                onClick={() => setRole('CUSTOMER')}
+                className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center text-center transition-all duration-200 ${
+                  role === 'CUSTOMER'
+                    ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md ring-1 ring-blue-600'
+                    : 'border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:bg-gray-50'
+                }`}
+              >
+                <Building className={`h-7 w-7 mb-2 ${role === 'CUSTOMER' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <span className="text-sm font-semibold">İşveren / Müşteri</span>
+              </div>
+
+              <div
+                onClick={() => setRole('FREELANCER')}
+                className={`cursor-pointer rounded-xl border-2 p-4 flex flex-col items-center justify-center text-center transition-all duration-200 ${
+                  role === 'FREELANCER'
+                    ? 'border-blue-600 bg-blue-50 text-blue-700 shadow-md ring-1 ring-blue-600'
+                    : 'border-gray-200 bg-white text-gray-500 hover:border-blue-300 hover:bg-gray-50'
+                }`}
+              >
+                <Laptop className={`h-7 w-7 mb-2 ${role === 'FREELANCER' ? 'text-blue-600' : 'text-gray-400'}`} />
+                <span className="text-sm font-semibold">Freelancer / İş Arıyorum</span>
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-4">
             <div>

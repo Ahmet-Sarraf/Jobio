@@ -5,14 +5,23 @@ interface User {
   id: string;
   name?: string;
   email: string;
+  role?: string;
   avatarUrl?: string;
   cvUrl?: string;
+  company?: string;
+  bio?: string;
+  hourlyRate?: number;
+  portfolioUrl?: string;
 }
 
 interface ProfileCache {
   [userId: string]: {
     avatarUrl?: string;
     cvUrl?: string;
+    company?: string;
+    bio?: string;
+    hourlyRate?: number;
+    portfolioUrl?: string;
   };
 }
 
@@ -64,6 +73,10 @@ export const useAuthStore = create<AuthState>()(
                   ...state.profileCache[state.user.id],
                   avatarUrl: data.avatarUrl ?? state.profileCache[state.user.id]?.avatarUrl,
                   cvUrl: data.cvUrl ?? state.profileCache[state.user.id]?.cvUrl,
+                  company: data.company ?? state.profileCache[state.user.id]?.company,
+                  bio: data.bio ?? state.profileCache[state.user.id]?.bio,
+                  hourlyRate: data.hourlyRate ?? state.profileCache[state.user.id]?.hourlyRate,
+                  portfolioUrl: data.portfolioUrl ?? state.profileCache[state.user.id]?.portfolioUrl,
                 },
               }
             : state.profileCache;
