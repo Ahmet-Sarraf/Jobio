@@ -16,14 +16,28 @@ export class JobsService {
       throw new ForbiddenException('Sadece müşteri (customer) profili olanlar iş ilanı oluşturabilir.');
     }
 
+    const jobData: any = {
+      title: createJobDto.title,
+      description: createJobDto.description,
+      category: createJobDto.category,
+      experienceLevel: createJobDto.experienceLevel,
+      duration: createJobDto.duration,
+      budget: createJobDto.budget,
+      customerId: customer.id,
+      status: 'OPEN',
+    };
+
+    if (createJobDto.skills && createJobDto.skills.length > 0) {
+      jobData.requiredSkills = {
+        connectOrCreate: createJobDto.skills.map((skill) => ({
+          where: { name: skill.toLowerCase().trim() },
+          create: { name: skill.toLowerCase().trim() },
+        })),
+      };
+    }
+
     return this.prisma.job.create({
-      data: {
-        title: createJobDto.title,
-        description: createJobDto.description,
-        budget: createJobDto.budget,
-        customerId: customer.id,
-        status: 'OPEN',
-      },
+      data: jobData,
     });
   }
 
@@ -38,6 +52,7 @@ export class JobsService {
             },
           },
         },
+        requiredSkills: true,
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -60,6 +75,7 @@ export class JobsService {
       include: {
         customer: { include: { user: { select: { name: true, avatarUrl: true } } } },
         freelancer: { include: { user: { select: { name: true, avatarUrl: true } } } },
+        requiredSkills: true,
         review: true,
       },
       orderBy: { createdAt: 'desc' },
