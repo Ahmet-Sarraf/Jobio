@@ -16,45 +16,46 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout();
-    // Redirect logic could be handled here or via the Link/Button
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <nav className="sticky top-0 z-50 w-full border-b-[4px] border-black bg-white">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
-          <Briefcase className="h-6 w-6 text-blue-600" />
-          <Link href="/" className="text-xl font-bold tracking-tight text-gray-900">
-            Job<span className="text-blue-600">io</span>
+          <div className="bg-brutal-yellow border-2 border-black p-1 rounded-sm shadow-brutal-sm">
+            <Briefcase className="h-6 w-6 text-black" strokeWidth={2.5} />
+          </div>
+          <Link href="/" className="text-2xl font-black tracking-tight text-black flex items-center gap-1">
+            JOB<span className="text-brutal-blue">IO</span>
           </Link>
         </div>
 
         <div className="flex items-center gap-4">
           {!mounted ? (
-            <div className="h-8 w-24 animate-pulse rounded-md bg-gray-200" />
+            <div className="h-10 w-24 border-2 border-black rounded-md bg-gray-200" />
           ) : isAuthenticated ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 href="/create-job"
-                className="hidden sm:flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                className="hidden sm:flex items-center gap-1.5 rounded-md bg-brutal-yellow px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
               >
-                <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-5 w-5" strokeWidth={2.5} />
                 <span>İlan Oluştur</span>
               </Link>
               
               <Link
                 href="/profile"
-                className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 border border-gray-200"
+                className="flex items-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
               >
-                <UserIcon className="h-4 w-4 text-gray-500" />
+                <UserIcon className="h-5 w-5" strokeWidth={2.5} />
                 <span className="hidden sm:inline">Profil</span>
               </Link>
 
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600"
+                className="flex items-center gap-2 rounded-md bg-brutal-pink px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" strokeWidth={2.5} />
                 <span className="hidden sm:inline">Çıkış</span>
               </button>
             </div>
@@ -62,13 +63,13 @@ export default function Navbar() {
             <div className="flex items-center gap-3">
               <Link
                 href="/login"
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+                className="text-sm font-bold text-black border-b-2 border-transparent hover:border-black transition-colors"
               >
                 Giriş Yap
               </Link>
               <Link
                 href="/register"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 shadow-sm"
+                className="rounded-md bg-brutal-blue px-5 py-2.5 text-sm font-bold text-white border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all tracking-wide"
               >
                 Kayıt Ol
               </Link>

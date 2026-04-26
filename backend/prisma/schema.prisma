@@ -74,6 +74,9 @@ model Job {
 
   title          String
   description    String
+  category       String?
+  experienceLevel String?
+  duration       String?
   budget         Float?
   status         JobStatus       @default(OPEN)
 
