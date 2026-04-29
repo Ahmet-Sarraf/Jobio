@@ -30,6 +30,8 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   profileCache: ProfileCache;
+  _hasHydrated: boolean;
+  setHasHydrated: (state: boolean) => void;
   login: (user: User, token: string) => void;
   logout: () => void;
   updateUserProfile: (data: Partial<User>) => void;
@@ -42,6 +44,8 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       isAuthenticated: false,
       profileCache: {},
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
 
       login: (incomingUser, token) => {
         // Logout sonrasında user null olur, ama profileCache userId'ye göre kalıcıdır.
@@ -87,6 +91,9 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );
