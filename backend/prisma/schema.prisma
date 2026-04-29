@@ -45,6 +45,7 @@ model FreelancerProfile {
   
   assignedJobs Job[]    @relation("AssignedFreelancer")
   reviews      Review[] @relation("ReceivedReviews")
+  applications Application[] @relation("FreelancerApplications")
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -82,6 +83,7 @@ model Job {
 
   requiredSkills Skill[]         @relation("JobSkills")
   review         Review?
+  applications   Application[]   @relation("JobApplications")
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -109,4 +111,22 @@ model Skill {
   name        String              @unique
   freelancers FreelancerProfile[] @relation("FreelancerSkills")
   jobs        Job[]               @relation("JobSkills")
+}
+
+model Application {
+  id           String            @id @default(uuid())
+  
+  jobId        String
+  job          Job               @relation("JobApplications", fields: [jobId], references: [id], onDelete: Cascade)
+  
+  freelancerId String
+  freelancer   FreelancerProfile @relation("FreelancerApplications", fields: [freelancerId], references: [id], onDelete: Cascade)
+  
+  coverLetter  String
+  status       String            @default("PENDING")
+  
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  
+  @@unique([jobId, freelancerId])
 }
