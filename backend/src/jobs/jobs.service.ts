@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CreateJobDto } from './dto/create-job.dto';
 import { AssignJobDto } from './dto/assign-job.dto';
+import { ApplyJobDto } from './dto/apply-job.dto';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -77,6 +78,31 @@ export class JobsService {
         freelancer: { include: { user: { select: { name: true, avatarUrl: true } } } },
         requiredSkills: true,
         review: true,
+        _count: { select: { applications: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getJobApplications(jobId: string, userId: string) {
+    const job = await this.prisma.job.findUnique({
+      where: { id: jobId },
+      include: { customer: true },
+    });
+
+    if (!job) throw new NotFoundException('İş bulunamadı.');
+    if (job.customer.userId !== userId) {
+      throw new ForbiddenException('Bu ilanın başvurularını görme yetkiniz yok.');
+    }
+
+    return this.prisma.application.findMany({
+      where: { jobId },
+      include: {
+        freelancer: {
+          include: {
+            user: { select: { name: true, avatarUrl: true, email: true } },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -138,6 +164,107 @@ export class JobsService {
     return this.prisma.job.update({
       where: { id: jobId },
       data: { status: 'COMPLETED' },
+    });
+  }
+
+  async applyJob(jobId: string, applyJobDto: ApplyJobDto, userId: string) {
+    const job = await this.prisma.job.findUnique({ where: { id: jobId } });
+    if (!job) throw new NotFoundException('İş bulunamadı.');
+    
+    if (job.status !== 'OPEN') {
+      throw new BadRequestException('Bu iş başvurulara kapalıdır.');
+    }
+
+    const freelancer = await this.prisma.freelancerProfile.findUnique({ where: { userId } });
+    if (!freelancer) {
+      throw new ForbiddenException('Sadece freelancer profili olanlar başvuru yapabilir.');
+    }
+
+    const existingApplication = await this.prisma.application.findUnique({
+      where: {
+        jobId_freelancerId: {
+          jobId,
+          freelancerId: freelancer.id,
+        }
+      }
+    });
+
+    if (existingApplication) {
+      throw new BadRequestException('Bu işe zaten başvurdunuz.');
+    }
+
+    return this.prisma.application.create({
+      data: {
+        jobId,
+        freelancerId: freelancer.id,
+        coverLetter: applyJobDto.coverLetter,
+      }
+    });
+  }
+
+  async cancelApplication(jobId: string, userId: string) {
+    const freelancer = await this.prisma.freelancerProfile.findUnique({ where: { userId } });
+    if (!freelancer) {
+      throw new ForbiddenException('Freelancer profili bulunamadı.');
+    }
+
+    const existingApplication = await this.prisma.application.findUnique({
+      where: {
+        jobId_freelancerId: {
+          jobId,
+          freelancerId: freelancer.id,
+        }
+      }
+    });
+
+    if (!existingApplication) {
+      throw new NotFoundException('Bu işe ait başvuru bulunamadı.');
+    }
+
+    return this.prisma.application.delete({
+      where: { id: existingApplication.id }
+    });
+  }
+
+  async checkApplicationStatus(jobId: string, userId: string) {
+    const freelancer = await this.prisma.freelancerProfile.findUnique({ where: { userId } });
+    if (!freelancer) {
+      return { hasApplied: false };
+    }
+
+    const application = await this.prisma.application.findUnique({
+      where: {
+        jobId_freelancerId: {
+          jobId,
+          freelancerId: freelancer.id,
+        }
+      }
+    });
+
+    return { hasApplied: !!application };
+  }
+
+  async getMyApplications(userId: string) {
+    const freelancer = await this.prisma.freelancerProfile.findUnique({ where: { userId } });
+    if (!freelancer) {
+      throw new ForbiddenException('Freelancer profili bulunamadı.');
+    }
+
+    return this.prisma.application.findMany({
+      where: { freelancerId: freelancer.id },
+      include: {
+        job: {
+          include: {
+            customer: {
+              include: {
+                user: { select: { name: true, avatarUrl: true } },
+              },
+            },
+            requiredSkills: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }
