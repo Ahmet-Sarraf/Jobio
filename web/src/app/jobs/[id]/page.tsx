@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/axios';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Clock, Building, ArrowLeft, Send, Tag, Briefcase, BarChart, CalendarDays, CheckCircle2, BadgeCheck, AlertCircle } from 'lucide-react';
+import { Clock, Building, ArrowLeft, Send, Tag, Briefcase, BarChart, CalendarDays, CheckCircle2, BadgeCheck, AlertCircle, X, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 
 interface Skill {
@@ -35,15 +35,36 @@ interface Job {
 export default function JobDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, _hasHydrated } = useAuthStore();
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [applyMessage, setApplyMessage] = useState('');
+  
+  // Toast ve Başvuru Durumları
+  const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [hasApplied, setHasApplied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchJobDetails();
   }, [id]);
+
+  useEffect(() => {
+    if (_hasHydrated && user && user.role === 'FREELANCER') {
+      fetchApplicationStatus();
+    }
+  }, [id, user, _hasHydrated]);
+
+  const fetchApplicationStatus = async () => {
+    try {
+      const response = await api.get(`/jobs/${id}/application-status`);
+      setHasApplied(response.data.hasApplied);
+    } catch (err) {
+      console.error("Başvuru durumu alınamadı:", err);
+    }
+  };
 
   const fetchJobDetails = async () => {
     try {
@@ -63,25 +84,66 @@ export default function JobDetailsPage() {
     }
   };
 
-  const handleApply = () => {
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleOpenModal = () => {
     if (!user) {
       router.push('/login');
       return;
     }
     
     if (user.role === 'CUSTOMER') {
-      setApplyMessage('Hata! İşveren hesapları ilanlara başvuramaz.');
+      showToast('Hata! İşverenler başvuru yapamaz.', 'error');
       return;
     }
     
     if (!user.cvUrl) {
-      setApplyMessage('Hata! Başvuru yapabilmek için profilinizden CV yüklemelisiniz.');
+      showToast('Hata! Başvuru yapabilmek için profilinizden CV yüklemelisiniz.', 'error');
       return;
     }
 
-    setApplyMessage('Tebrikler! İlana başarıyla başvuru yaptınız. Sonucu profilinizden takip edebilirsiniz.');
+    setIsApplyModalOpen(true);
   };
 
+  const handleApplySubmit = async () => {
+    if (!coverLetter.trim()) {
+      showToast('Lütfen geçerli bir ön yazı girin.', 'error');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      // Backend'deki ilgili başvuru oluşturma endpoint'ine istek atılıyor
+      await api.post(`/jobs/${id}/apply`, { coverLetter });
+      
+      setIsApplyModalOpen(false);
+      setHasApplied(true);
+      showToast('Tebrikler! İlana başarıyla başvuru yaptınız.', 'success');
+      setCoverLetter(''); // Formu temizle
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'Başvuru sırasında bir hata oluştu.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCancelApplication = async () => {
+    try {
+      setIsSubmitting(true);
+      // Backend'deki ilgili başvuru silme endpoint'ine istek atılıyor
+      await api.delete(`/jobs/${id}/apply`);
+      
+      setHasApplied(false);
+      showToast('Başvurunuz başarıyla iptal edildi.', 'error');
+    } catch (err: any) {
+      showToast(err.response?.data?.message || 'İptal işlemi sırasında bir hata oluştu.', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   if (loading) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-[#fdfbf7]">
@@ -213,25 +275,28 @@ export default function JobDetailsPage() {
 
               {/* Action Button */}
               {!isCustomer ? (
-                 <button 
-                  onClick={handleApply}
-                  disabled={job.status !== 'OPEN'}
-                  className="w-full inline-flex items-center justify-center gap-3 bg-brutal-blue px-6 py-5 text-xl font-black text-white border-[4px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-wider disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] disabled:cursor-not-allowed"
-                 >
-                   <Send className="h-6 w-6" strokeWidth={3} />
-                   {job.status === 'OPEN' ? 'HEMEN BAŞVUR' : 'BAŞVURUYA KAPALI'}
-                 </button>
+                 hasApplied ? (
+                   <button 
+                    onClick={handleCancelApplication}
+                    disabled={isSubmitting}
+                    className="w-full inline-flex items-center justify-center gap-3 bg-brutal-pink px-6 py-5 text-xl font-black text-black border-[4px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-wider disabled:opacity-50"
+                   >
+                     <Trash2 className="h-6 w-6" strokeWidth={3} />
+                     {isSubmitting ? 'İPTAL EDİLİYOR...' : 'BAŞVURUYU İPTAL ET'}
+                   </button>
+                 ) : (
+                   <button 
+                    onClick={handleOpenModal}
+                    disabled={job.status !== 'OPEN' || isSubmitting}
+                    className="w-full inline-flex items-center justify-center gap-3 bg-brutal-blue px-6 py-5 text-xl font-black text-white border-[4px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-wider disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] disabled:cursor-not-allowed"
+                   >
+                     <Send className="h-6 w-6" strokeWidth={3} />
+                     {job.status === 'OPEN' ? 'HEMEN BAŞVUR' : 'BAŞVURUYA KAPALI'}
+                   </button>
+                 )
               ) : (
-                <div className="w-full bg-brutal-bg border-[4px] border-black px-6 py-5 text-center text-base font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -rotate-1">
-                  MÜŞTERİ HESAPLARI BAŞVURU YAPAMAZ.
-                </div>
-              )}
-
-              {/* Messages */}
-              {applyMessage && (
-                <div className={`mt-6 p-5 border-[3px] border-black shadow-brutal-sm text-sm font-black uppercase flex gap-3 items-start ${applyMessage.includes('Hata') ? 'bg-brutal-pink text-black' : 'bg-green-300 text-black'}`}>
-                  {applyMessage.includes('Hata') ? <AlertCircle className="h-6 w-6 shrink-0" strokeWidth={2.5} /> : <CheckCircle2 className="h-6 w-6 shrink-0" strokeWidth={2.5} />}
-                  {applyMessage}
+                <div className="w-full bg-gray-200 border-[4px] border-black px-6 py-5 text-center text-base font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -rotate-1">
+                  İŞVERENLER BAŞVURU YAPAMAZ.
                 </div>
               )}
 
@@ -280,6 +345,54 @@ export default function JobDetailsPage() {
 
         </div>
       </div>
+
+      {/* --- Toast Notification --- */}
+      {toast && (
+        <div className={`fixed bottom-8 right-8 z-50 p-5 border-[3px] border-black shadow-brutal text-sm font-black uppercase flex gap-3 items-center animate-in slide-in-from-bottom-5 ${toast.type === 'error' ? 'bg-brutal-pink text-black' : 'bg-green-400 text-black'}`}>
+          {toast.type === 'error' ? <AlertCircle className="h-6 w-6 shrink-0" strokeWidth={2.5} /> : <CheckCircle2 className="h-6 w-6 shrink-0" strokeWidth={2.5} />}
+          {toast.message}
+        </div>
+      )}
+
+      {/* --- Apply Modal --- */}
+      {isApplyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-brutal-bg w-full max-w-2xl border-[4px] border-black shadow-brutal-lg p-8 relative animate-in zoom-in-95">
+            <button 
+              onClick={() => setIsApplyModalOpen(false)}
+              className="absolute top-4 right-4 p-2 bg-brutal-pink border-2 border-black shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+            >
+              <X className="h-6 w-6 text-black" strokeWidth={3} />
+            </button>
+            
+            <h3 className="text-3xl font-black text-black uppercase mb-6 border-b-4 border-black pb-2 inline-block">Başvuru Yap</h3>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="block text-lg font-black text-black uppercase mb-3">
+                  Ön Yazı (Cover Letter)
+                </label>
+                <textarea
+                  rows={6}
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                  placeholder="İşverene neden bu iş için en uygun kişi olduğunuzu detaylıca anlatın..."
+                  className="w-full p-4 bg-white border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:shadow-none focus:translate-x-[4px] focus:translate-y-[4px] outline-none transition-all resize-none text-lg font-bold text-black"
+                ></textarea>
+              </div>
+              
+              <button 
+                onClick={handleApplySubmit}
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-3 bg-green-400 px-6 py-4 text-xl font-black text-black border-[3px] border-black shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-wider disabled:opacity-50"
+              >
+                {isSubmitting ? 'GÖNDERİLİYOR...' : 'BAŞVURUYU GÖNDER'}
+                <Send className="h-6 w-6" strokeWidth={2.5} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
