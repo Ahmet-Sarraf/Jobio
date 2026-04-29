@@ -535,8 +535,10 @@ export default function ProfilePage() {
             </div>
           )}
 
+          {user.role === 'FREELANCER' && activeTab === 'İşlerim & Başvurular' && <FreelancerJobsTab />}
+
           {((user.role === 'CUSTOMER' && activeTab !== 'Profil Ayarları' && activeTab !== 'İlanlarım') || 
-            (user.role === 'FREELANCER' && activeTab !== 'Temel Bilgiler' && activeTab !== 'Özgeçmiş & Portfolyo')) && (
+            (user.role === 'FREELANCER' && activeTab !== 'Temel Bilgiler' && activeTab !== 'Özgeçmiş & Portfolyo' && activeTab !== 'İşlerim & Başvurular')) && (
             <div className="flex flex-col items-center justify-center min-h-[500px] bg-brutal-blue border-[4px] border-black shadow-brutal p-12 text-center -rotate-1">
               <div className="h-24 w-24 bg-brutal-yellow border-[3px] border-black shadow-brutal flex items-center justify-center mb-8 rotate-3">
                 <Settings className="h-12 w-12 text-black animate-[spin_4s_linear_infinite]" strokeWidth={2.5} />
@@ -557,7 +559,11 @@ export default function ProfilePage() {
 function MyJobsTab() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [loadingApplications, setLoadingApplications] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
+
+  const cardColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200', 'bg-purple-200'];
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -573,18 +579,36 @@ function MyJobsTab() {
     fetchJobs();
   }, []);
 
+  const fetchApplications = async (jobId: string) => {
+    try {
+      setLoadingApplications(true);
+      const res = await api.get(`/jobs/${jobId}/applications`);
+      setApplications(res.data);
+    } catch (err) {
+      console.error('Başvurular alınamadı', err);
+      setApplications([]);
+    } finally {
+      setLoadingApplications(false);
+    }
+  };
+
+  const handleViewApplications = (job: any) => {
+    setSelectedJob(job);
+    fetchApplications(job.id);
+  };
+
+  const handleClose = () => {
+    setSelectedJob(null);
+    setApplications([]);
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'OPEN':
-        return <span className="inline-block bg-green-300 text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm -rotate-1">AÇIK İLAN</span>;
-      case 'IN_PROGRESS':
-        return <span className="inline-block bg-brutal-blue text-white border-2 border-black font-bold px-3 py-1 shadow-brutal-sm rotate-1">DEVAM EDİYOR</span>;
-      case 'COMPLETED':
-        return <span className="inline-block bg-gray-300 text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm -rotate-2">TAMAMLANDI</span>;
-      case 'CANCELLED':
-        return <span className="inline-block bg-brutal-pink text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm rotate-2">İPTAL EDİLDİ</span>;
-      default:
-        return null;
+      case 'OPEN': return <span className="inline-block bg-green-300 text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm -rotate-1">AÇIK İLAN</span>;
+      case 'IN_PROGRESS': return <span className="inline-block bg-brutal-blue text-white border-2 border-black font-bold px-3 py-1 shadow-brutal-sm rotate-1">DEVAM EDİYOR</span>;
+      case 'COMPLETED': return <span className="inline-block bg-gray-300 text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm -rotate-2">TAMAMLANDI</span>;
+      case 'CANCELLED': return <span className="inline-block bg-brutal-pink text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm rotate-2">İPTAL EDİLDİ</span>;
+      default: return null;
     }
   };
 
@@ -597,126 +621,301 @@ function MyJobsTab() {
     );
   }
 
-  return (
-    <>
-      <div className="bg-white border-[3px] border-black shadow-brutal flex flex-col h-full min-h-[500px]">
-        <div className="border-b-[3px] border-black p-6 bg-brutal-blue text-white flex items-center justify-between">
+  /* ── BAŞVURULAR PANELİ ── */
+  if (selectedJob) {
+    return (
+      <div className="bg-white border-[3px] border-black shadow-brutal flex flex-col min-h-[600px]">
+        <div className="border-b-[3px] border-black p-6 bg-brutal-pink flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-3xl font-black uppercase tracking-wide">İlanlarım</h1>
-            <p className="mt-1 text-sm font-bold">Oluşturduğunuz tüm iş ilanları.</p>
+            <button onClick={handleClose} className="text-sm font-black uppercase border-2 border-black bg-white px-3 py-1 shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all mb-3 inline-block">
+              ← Geri Dön
+            </button>
+            <h2 className="text-2xl font-black uppercase text-black">{selectedJob.title}</h2>
+            <p className="text-sm font-bold mt-1">Bu ilana yapılan başvurular</p>
           </div>
-          <div className="bg-brutal-yellow text-black border-2 border-black px-4 py-2 font-black shadow-brutal-sm rotate-2">
-            TOPLAM: {jobs.length}
+          <div className="bg-black text-brutal-yellow border-2 border-black px-5 py-3 font-black text-xl shadow-brutal-sm -rotate-2 shrink-0">
+            {applications.length} BAŞVURU
           </div>
         </div>
-        
-        <div className="p-8 flex-1 overflow-auto bg-brutal-bg">
-          {jobs.length === 0 ? (
-            <div className="text-center py-16 px-4">
+
+        <div className="p-6 flex-1 bg-brutal-bg">
+          {loadingApplications ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-4">
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-brutal-yellow"></div>
+              <p className="font-black uppercase">Başvurular Yükleniyor...</p>
+            </div>
+          ) : applications.length === 0 ? (
+            <div className="text-center py-20">
               <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
-                <Briefcase className="h-10 w-10 text-black" strokeWidth={2.5} />
+                <FileText className="h-10 w-10 text-black" strokeWidth={2.5} />
               </div>
-              <h3 className="text-2xl font-black text-black uppercase mb-2">İLAN YOK</h3>
-              <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">
-                Yeni bir ilan oluşturarak freelancer'larla çalışmaya başlayın.
-              </p>
+              <h3 className="text-2xl font-black uppercase mb-2">Henüz Başvuru Yok</h3>
+              <p className="font-bold text-gray-600">Bu ilana henüz başvuru yapılmamış.</p>
             </div>
           ) : (
-             <div className="space-y-6">
-               {jobs.map((job) => (
-                 <div 
-                   key={job.id} 
-                   onClick={() => setSelectedJob(job)}
-                   className="flex flex-col sm:flex-row sm:items-center justify-between p-6 bg-white border-[3px] border-black shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all group cursor-pointer"
-                 >
-                   <div>
-                     <h3 className="text-xl font-black text-black uppercase">{job.title}</h3>
-                     <div className="flex items-center gap-3 mt-3 font-bold">
-                       <span className="text-black bg-brutal-yellow px-2 py-1 border-2 border-black">
-                         ${job.budget}
-                       </span>
-                       <span className="text-black bg-gray-200 px-2 py-1 border-2 border-black">
-                         {new Date(job.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                       </span>
-                     </div>
-                   </div>
-                   <div className="mt-6 sm:mt-0">
-                     {getStatusBadge(job.status)}
-                   </div>
-                 </div>
-               ))}
-             </div>
-          )}
-        </div>
-      </div>
-
-      {selectedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedJob(null)}>
-          <div 
-            className="bg-white border-4 border-black shadow-brutal w-full max-w-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-6 py-4 border-b-4 border-black bg-brutal-pink">
-              <h2 className="text-2xl font-black text-black uppercase line-clamp-1 pr-4">{selectedJob.title}</h2>
-              <button 
-                onClick={() => setSelectedJob(null)}
-                className="p-2 bg-white border-2 border-black shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
-              >
-                <X className="h-6 w-6 text-black" strokeWidth={3} />
-              </button>
-            </div>
-            
-            <div className="px-6 py-6 max-h-[70vh] overflow-y-auto">
-              <div className="flex flex-wrap items-center gap-4 mb-8">
-                {getStatusBadge(selectedJob.status)}
-                <span className="bg-brutal-yellow text-black px-3 py-1 border-2 border-black font-black rotate-1">
-                  ${selectedJob.budget} BÜTÇE
-                </span>
-                <span className="bg-gray-200 text-black px-3 py-1 border-2 border-black font-bold -rotate-1">
-                  {new Date(selectedJob.createdAt).toLocaleDateString('tr-TR')}
-                </span>
-              </div>
-              
-              <div className="space-y-8">
-                <div>
-                  <h4 className="text-lg font-black text-black mb-2 uppercase border-b-2 border-black inline-block">İLAN DETAYI</h4>
-                  <p className="text-black font-medium leading-loose bg-brutal-bg p-6 border-2 border-black shadow-brutal-sm">
-                    {selectedJob.description || 'Detaylı açıklama bulunmuyor.'}
-                  </p>
-                </div>
-                
-                {selectedJob.freelancer && (
-                  <div>
-                    <h4 className="text-lg font-black text-black mb-3 uppercase border-b-2 border-black inline-block">ATANAN FREELANCER</h4>
-                    <div className="flex items-center gap-4 bg-brutal-blue p-6 border-2 border-black shadow-brutal">
-                      {selectedJob.freelancer.user?.avatarUrl ? (
-                        <img src={selectedJob.freelancer.user.avatarUrl} alt="Avatar" className="w-16 h-16 rounded-full border-4 border-black object-cover bg-white" />
+            <div className="space-y-6">
+              {applications.map((app: any, i: number) => (
+                <div key={app.id} className={`${cardColors[i % cardColors.length]} ${i % 2 === 0 ? 'rotate-[0.4deg]' : '-rotate-[0.4deg]'} border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                    <div className="flex items-center gap-4">
+                      {app.freelancer?.user?.avatarUrl ? (
+                        <img src={app.freelancer.user.avatarUrl} alt="Avatar" className="h-14 w-14 border-[3px] border-black object-cover shrink-0" />
                       ) : (
-                        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center border-4 border-black">
-                          <User className="h-8 w-8 text-black" />
+                        <div className="h-14 w-14 bg-white border-[3px] border-black flex items-center justify-center text-black font-black text-2xl shrink-0">
+                          {app.freelancer?.user?.name?.charAt(0) || '?'}
                         </div>
                       )}
                       <div>
-                        <p className="font-black text-2xl text-white uppercase">{selectedJob.freelancer.user?.name || 'İsimsiz'}</p>
-                        <p className="text-sm font-bold text-brutal-yellow uppercase mt-1">Bu Projede Çalışıyor</p>
+                        <p className="text-xl font-black uppercase text-black">{app.freelancer?.user?.name || 'İsimsiz'}</p>
+                        <p className="text-sm font-bold text-black/70">{app.freelancer?.user?.email || ''}</p>
                       </div>
                     </div>
+                    <span className="bg-white border-2 border-black px-3 py-1 text-xs font-black uppercase shadow-brutal-sm shrink-0">
+                      {new Date(app.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
                   </div>
-                )}
-              </div>
+
+                  <div className="mb-5">
+                    <p className="text-xs font-black uppercase text-black mb-2 border-b-2 border-black pb-1 inline-block">Ön Yazı</p>
+                    <div className="bg-white border-2 border-black p-4 shadow-brutal-sm text-black font-medium leading-relaxed whitespace-pre-wrap">
+                      {app.coverLetter}
+                    </div>
+                  </div>
+
+                  {app.freelancer?.resumeUrl ? (
+                    <a href={app.freelancer.resumeUrl} target="_blank" rel="noreferrer"
+                      className="inline-flex items-center gap-2 bg-brutal-blue text-white px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm">
+                      <FileText className="h-5 w-5" strokeWidth={2.5} />
+                      CV'Yİ GÖRÜNTÜLE
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 bg-gray-200 text-black px-5 py-3 border-[3px] border-black font-black uppercase text-sm opacity-60 cursor-not-allowed">
+                      <FileText className="h-5 w-5" strokeWidth={2.5} />
+                      CV YÜKLENMEMİŞ
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
-            
-            <div className="px-6 py-4 bg-brutal-bg border-t-4 border-black flex justify-end">
-              <button 
-                onClick={() => setSelectedJob(null)}
-                className="px-8 py-3 bg-black text-white font-black uppercase hover:bg-gray-800 border-2 border-black hover:-translate-y-1 transition-transform"
-              >
-                KAPAT
-              </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  /* ── İLANLARIM LİSTESİ ── */
+  return (
+    <div className="bg-white border-[3px] border-black shadow-brutal flex flex-col min-h-[500px]">
+      <div className="border-b-[3px] border-black p-6 bg-brutal-blue text-white flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-black uppercase tracking-wide">İlanlarım</h1>
+          <p className="mt-1 text-sm font-bold">Oluşturduğunuz tüm iş ilanları.</p>
+        </div>
+        <div className="bg-brutal-yellow text-black border-2 border-black px-4 py-2 font-black shadow-brutal-sm rotate-2">
+          TOPLAM: {jobs.length}
+        </div>
+      </div>
+
+      <div className="p-8 flex-1 bg-brutal-bg">
+        {jobs.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
+              <Briefcase className="h-10 w-10 text-black" strokeWidth={2.5} />
             </div>
+            <h3 className="text-2xl font-black text-black uppercase mb-2">İLAN YOK</h3>
+            <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Yeni bir ilan oluşturarak freelancer'larla çalışmaya başlayın.</p>
           </div>
+        ) : (
+          <div className="space-y-6">
+            {jobs.map((job) => {
+              const appCount = job._count?.applications ?? 0;
+              return (
+                <div key={job.id} className="relative bg-white border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all group">
+                  {/* Başvuru Sayısı Sticker */}
+                  <div className="absolute -top-4 -right-3 z-10">
+                    <span className="inline-block bg-green-300 text-black border-[3px] border-black px-3 py-1 text-sm font-black uppercase shadow-brutal-sm rotate-3 group-hover:rotate-6 transition-transform">
+                      {appCount} BAŞVURU
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-20">
+                    <div>
+                      <h3 className="text-xl font-black text-black uppercase mb-3">{job.title}</h3>
+                      <div className="flex flex-wrap items-center gap-3">
+                        {getStatusBadge(job.status)}
+                        <span className="text-black bg-brutal-yellow px-2 py-1 border-2 border-black font-bold text-sm">
+                          {job.budget ? `${job.budget} ₺` : 'Bütçe Yok'}
+                        </span>
+                        <span className="text-black bg-gray-200 px-2 py-1 border-2 border-black font-bold text-sm">
+                          {new Date(job.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {appCount > 0 && (
+                      <button onClick={() => handleViewApplications(job)}
+                        className="shrink-0 inline-flex items-center gap-2 bg-brutal-pink text-black px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm">
+                        <Users className="h-5 w-5" strokeWidth={2.5} />
+                        BAŞVURANLARI GÖR
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FreelancerJobsTab() {
+  const [activeInner, setActiveInner] = useState<'applications' | 'active'>('applications');
+  const [applications, setApplications] = useState<any[]>([]);
+  const [activeJobs, setActiveJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const cardColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200', 'bg-purple-200'];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [appsRes, jobsRes] = await Promise.all([
+          api.get('/jobs/my-applications'),
+          api.get('/jobs/my-jobs'),
+        ]);
+        setApplications(appsRes.data);
+        setActiveJobs(jobsRes.data.filter((j: any) => j.freelancerId));
+      } catch (err) {
+        console.error('Veriler alinamadi', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] bg-white border-[3px] border-black shadow-brutal">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-brutal-yellow"></div>
+        <p className="mt-4 text-base font-black uppercase">Yukleniyor...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white border-[3px] border-black shadow-brutal flex flex-col min-h-[500px]">
+      <div className="border-b-[3px] border-black p-6 bg-brutal-yellow text-black">
+        <h1 className="text-3xl font-black uppercase tracking-wide">İşlerim &amp; Başvurularım</h1>
+        <p className="mt-1 text-sm font-bold">Başvurduğunuz ilanlar ve aktif işleriniz.</p>
+      </div>
+
+      <div className="flex border-b-[3px] border-black">
+        <button
+          onClick={() => setActiveInner('applications')}
+          className={`flex-1 py-4 font-black uppercase text-sm tracking-wide border-r-[3px] border-black transition-all ${activeInner === 'applications' ? 'bg-brutal-yellow text-black' : 'bg-white hover:bg-gray-50 text-black'}`}
+        >
+          Başvurularım
+          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{applications.length}</span>
+        </button>
+        <button
+          onClick={() => setActiveInner('active')}
+          className={`flex-1 py-4 font-black uppercase text-sm tracking-wide transition-all ${activeInner === 'active' ? 'bg-brutal-blue text-white' : 'bg-white hover:bg-gray-50 text-black'}`}
+        >
+          Aktif İşlerim
+          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{activeJobs.length}</span>
+        </button>
+      </div>
+
+      {activeInner === 'applications' && (
+        <div className="p-6 flex-1 bg-brutal-bg">
+          {applications.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
+                <FileText className="h-10 w-10 text-black" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-2xl font-black text-black uppercase mb-2">Başvuru Yok</h3>
+              <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Henüz hiçbir ilana başvurmadınız.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {applications.map((app: any, i: number) => (
+                <div key={app.id} className={`${cardColors[i % cardColors.length]} ${i % 2 === 0 ? 'rotate-[0.3deg]' : '-rotate-[0.3deg]'} border-[3px] border-black shadow-brutal p-5 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-black text-black uppercase mb-1">{app.job?.title || 'İsimsiz İş'}</h3>
+                      <p className="text-xs font-bold text-black/70 mb-3">
+                        {app.job?.customer?.user?.name || 'Bilinmeyen İşveren'} &bull;{' '}
+                        {new Date(app.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <span className={`inline-block border-2 border-black font-bold px-3 py-1 shadow-brutal-sm text-xs uppercase ${app.status === 'ACCEPTED' ? 'bg-green-300 -rotate-1' : app.status === 'REJECTED' ? 'bg-brutal-pink rotate-1' : 'bg-brutal-yellow rotate-1'}`}>
+                          {app.status === 'ACCEPTED' ? 'Kabul Edildi' : app.status === 'REJECTED' ? 'Reddedildi' : 'Beklemede'}
+                        </span>
+                        {app.job?.budget && <span className="bg-white text-black border-2 border-black px-2 py-0.5 text-xs font-black">{app.job.budget} ₺</span>}
+                        {app.job?.category && <span className="bg-black text-white px-2 py-0.5 text-xs font-black">{app.job.category}</span>}
+                      </div>
+                    </div>
+                    {app.job?.id && (
+                      <a href={`/jobs/${app.job.id}`} className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-xs">
+                        <Briefcase className="h-4 w-4" strokeWidth={2.5} /> İLANA GİT
+                      </a>
+                    )}
+                  </div>
+                  {app.coverLetter && (
+                    <div className="mt-4">
+                      <p className="text-xs font-black uppercase text-black mb-1 border-b-2 border-black pb-1 inline-block">Ön Yazınız</p>
+                      <div className="bg-white/70 border-2 border-black p-3 text-black text-sm font-medium leading-relaxed line-clamp-3">{app.coverLetter}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
-    </>
+
+      {activeInner === 'active' && (
+        <div className="p-6 flex-1 bg-brutal-bg">
+          {activeJobs.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 rotate-3">
+                <Briefcase className="h-10 w-10 text-black" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-2xl font-black text-black uppercase mb-2">Aktif İş Yok</h3>
+              <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Şu an atanmış aktif bir işiniz bulunmuyor.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {activeJobs.map((job: any, i: number) => (
+                <div key={job.id} className={`${cardColors[i % cardColors.length]} ${i % 2 === 0 ? 'rotate-[0.3deg]' : '-rotate-[0.3deg]'} border-[3px] border-black shadow-brutal p-5 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all`}>
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-black text-black uppercase mb-1">{job.title}</h3>
+                      <p className="text-xs font-bold text-black/70 mb-3">
+                        {job.customer?.user?.name || 'Bilinmeyen İşveren'} &bull;{' '}
+                        {new Date(job.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </p>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        <span className={`inline-block border-2 border-black font-bold px-3 py-1 shadow-brutal-sm text-xs uppercase ${job.status === 'IN_PROGRESS' ? 'bg-brutal-blue text-white rotate-1' : job.status === 'COMPLETED' ? 'bg-green-300 -rotate-1' : 'bg-gray-300 rotate-2'}`}>
+                          {job.status === 'IN_PROGRESS' ? 'Devam Ediyor' : job.status === 'COMPLETED' ? 'Tamamlandı' : job.status}
+                        </span>
+                        {job.budget && <span className="bg-white text-black border-2 border-black px-2 py-0.5 text-xs font-black">{job.budget} ₺</span>}
+                        {job.category && <span className="bg-black text-white px-2 py-0.5 text-xs font-black">{job.category}</span>}
+                      </div>
+                    </div>
+                    <a href={`/jobs/${job.id}`} className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-xs">
+                      <Briefcase className="h-4 w-4" strokeWidth={2.5} /> DETAYLARA GİT
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
