@@ -59,6 +59,22 @@ export class JobsService {
     });
   }
 
+  async findById(jobId: string) {
+    const job = await this.prisma.job.findUnique({
+      where: { id: jobId },
+      include: {
+        customer: {
+          include: {
+            user: { select: { name: true, avatarUrl: true } },
+          },
+        },
+        requiredSkills: true,
+      },
+    });
+    if (!job) throw new NotFoundException('İlan bulunamadı.');
+    return job;
+  }
+
   async findMyJobs(userId: string) {
     const customer = await this.prisma.customerProfile.findUnique({ where: { userId }});
     const freelancer = await this.prisma.freelancerProfile.findUnique({ where: { userId }});
@@ -79,6 +95,17 @@ export class JobsService {
         requiredSkills: true,
         review: true,
         _count: { select: { applications: true } },
+        // Kabul edilen başvuruyu da getir (müşteri "Aktif İşlerim" için)
+        applications: {
+          where: { status: 'ACCEPTED' },
+          include: {
+            freelancer: {
+              include: {
+                user: { select: { id: true, name: true, avatarUrl: true, email: true } },
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -229,7 +256,7 @@ export class JobsService {
   async checkApplicationStatus(jobId: string, userId: string) {
     const freelancer = await this.prisma.freelancerProfile.findUnique({ where: { userId } });
     if (!freelancer) {
-      return { hasApplied: false };
+      return { hasApplied: false, status: null };
     }
 
     const application = await this.prisma.application.findUnique({
@@ -241,7 +268,110 @@ export class JobsService {
       }
     });
 
-    return { hasApplied: !!application };
+    return { hasApplied: !!application, status: application?.status ?? null };
+  }
+
+  async updateApplicationStatus(applicationId: string, status: 'ACCEPTED' | 'REJECTED', userId: string) {
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+      include: {
+        job: {
+          include: {
+            customer: {
+              include: {
+                user: { select: { name: true } },
+              },
+            },
+          },
+        },
+        freelancer: {
+          include: {
+            user: { select: { id: true, name: true } },
+          },
+        },
+      },
+    });
+
+    if (!application) throw new NotFoundException('Başvuru bulunamadı.');
+    if (application.job.customer.userId !== userId) {
+      throw new ForbiddenException('Bu başvuruyu değerlendirme yetkiniz yok.');
+    }
+
+    // Aynı iş için zaten kabul edilmiş biri var mı?
+    if (status === 'ACCEPTED') {
+      const alreadyAccepted = await this.prisma.application.findFirst({
+        where: { jobId: application.jobId, status: 'ACCEPTED' },
+      });
+      if (alreadyAccepted) {
+        throw new BadRequestException('Bu ilan için zaten bir aday kabul edilmiştir.');
+      }
+    }
+
+    // Statüyü güncelle
+    const updated = await this.prisma.application.update({
+      where: { id: applicationId },
+      data: { status },
+    });
+
+    // Eğer KABUL EDİLDİYSE: ilanı da IN_PROGRESS yap ve freelancer'ı ata
+    if (status === 'ACCEPTED') {
+      await this.prisma.job.update({
+        where: { id: application.jobId },
+        data: {
+          status: 'IN_PROGRESS',
+          freelancerId: application.freelancerId,
+        },
+      });
+    }
+
+    const employerName = application.job.customer.user.name || 'Bir işveren';
+    const jobTitle = application.job.title;
+    const statusText = status === 'ACCEPTED' ? 'Kabul Edildi' : 'Reddedildi';
+    const message = `${employerName} isimli kullanıcının açtığı ${jobTitle} ilanına başvurunuz ${statusText}. İyi çalışmalar.`;
+
+    // Kabul edilen freelancer'a bildirim
+    await this.prisma.notification.create({
+      data: { userId: application.freelancer.user.id, message },
+    });
+
+    // Eğer KABUL EDİLDİYSE: diğer PENDING başvuruları otomatik reddet ve bildir
+    if (status === 'ACCEPTED') {
+      const otherApps = await this.prisma.application.findMany({
+        where: {
+          jobId: application.jobId,
+          id: { not: applicationId },
+          status: 'PENDING',
+        },
+        include: {
+          freelancer: {
+            include: { user: { select: { id: true } } },
+          },
+        },
+      });
+
+      if (otherApps.length > 0) {
+        // Hepsini REJECTED yap
+        await this.prisma.application.updateMany({
+          where: {
+            jobId: application.jobId,
+            id: { not: applicationId },
+            status: 'PENDING',
+          },
+          data: { status: 'REJECTED' },
+        });
+
+        // Her birine red bildirimi gönder
+        const rejectMsg = `${employerName} isimli kullanıcının açtığı ${jobTitle} ilanına başvurunuz Reddedildi. İyi çalışmalar.`;
+        await this.prisma.notification.createMany({
+          data: otherApps.map((app) => ({
+            userId: app.freelancer.user.id,
+            message: rejectMsg,
+          })),
+        });
+      }
+    }
+
+    return updated;
   }
 
   async getMyApplications(userId: string) {
