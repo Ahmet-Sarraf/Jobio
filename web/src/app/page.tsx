@@ -23,16 +23,29 @@ export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated } = useAuthStore();
+  const [acceptedJobIds, setAcceptedJobIds] = useState<Set<string>>(new Set());
+  const { isAuthenticated, user, _hasHydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
+    if (!_hasHydrated) return;
     if (isAuthenticated) {
       fetchJobs();
+      if (user?.role === 'FREELANCER') fetchMyApplications();
     } else {
       setLoading(false);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, _hasHydrated, router]);
+
+  const fetchMyApplications = async () => {
+    try {
+      const res = await api.get('/jobs/my-applications');
+      const accepted = new Set<string>(
+        res.data.filter((a: any) => a.status === 'ACCEPTED').map((a: any) => a.job?.id).filter(Boolean)
+      );
+      setAcceptedJobIds(accepted);
+    } catch {}
+  };
 
   const fetchJobs = async () => {
     try {
@@ -96,16 +109,24 @@ export default function Home() {
         </div>
       ) : (
         <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {jobs.map((job) => (
+          {jobs.map((job) => {
+            const isAccepted = acceptedJobIds.has(job.id);
+            return (
             <div
               key={job.id}
-              className="group flex flex-col justify-between bg-white border-[4px] border-black p-6 shadow-brutal hover:-translate-y-2 hover:-translate-x-2 transition-transform relative"
+              className={`group flex flex-col justify-between border-[4px] border-black p-6 shadow-brutal hover:-translate-y-2 hover:-translate-x-2 transition-transform relative ${isAccepted ? 'bg-green-50' : 'bg-white'}`}
             >
               {/* Statü Rozeti */}
               <div className="absolute -top-4 -right-4 rotate-6 group-hover:rotate-12 transition-transform">
-                 <span className={`inline-block border-2 border-black px-4 py-1 text-sm font-black uppercase shadow-brutal-sm ${job.status === 'OPEN' ? 'bg-green-300 text-black' : 'bg-gray-300 text-black'}`}>
+                {isAccepted ? (
+                  <span className="inline-block border-2 border-black px-4 py-1 text-sm font-black uppercase shadow-brutal-sm bg-green-400 text-black">
+                    KABUL EDİLDİNİZ
+                  </span>
+                ) : (
+                  <span className={`inline-block border-2 border-black px-4 py-1 text-sm font-black uppercase shadow-brutal-sm ${job.status === 'OPEN' ? 'bg-green-300 text-black' : 'bg-gray-300 text-black'}`}>
                     {job.status === 'OPEN' ? 'Açık' : job.status}
-                 </span>
+                  </span>
+                )}
               </div>
 
               <div>
@@ -136,13 +157,14 @@ export default function Home() {
                   {new Date(job.createdAt).toLocaleDateString('tr-TR')}
                 </span>
                 <Link href={`/jobs/${job.id}`}>
-                  <button className="bg-brutal-pink px-5 py-2.5 text-sm font-black text-black uppercase border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all">
+                  <button className={`px-5 py-2.5 text-sm font-black text-black uppercase border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all ${isAccepted ? 'bg-green-400' : 'bg-brutal-pink'}`}>
                     Detayları Gör
                   </button>
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
