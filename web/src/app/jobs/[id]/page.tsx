@@ -45,6 +45,7 @@ export default function JobDetailsPage() {
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [hasApplied, setHasApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export default function JobDetailsPage() {
     try {
       const response = await api.get(`/jobs/${id}/application-status`);
       setHasApplied(response.data.hasApplied);
+      setApplicationStatus(response.data.status ?? null);
     } catch (err) {
       console.error("Başvuru durumu alınamadı:", err);
     }
@@ -69,16 +71,10 @@ export default function JobDetailsPage() {
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/jobs');
-      const foundJob = response.data.find((j: Job) => j.id === id);
-      
-      if (foundJob) {
-        setJob(foundJob);
-      } else {
-        setError('İlan bulunamadı veya silinmiş.');
-      }
+      const response = await api.get(`/jobs/${id}`);
+      setJob(response.data);
     } catch (err: any) {
-      setError('İlan detayları yüklenirken hata oluştu.');
+      setError('İlan bulunamadı veya silinmiş.');
     } finally {
       setLoading(false);
     }
@@ -181,12 +177,33 @@ export default function JobDetailsPage() {
         <div className="flex flex-col lg:flex-row gap-10 items-start">
           {/* SOL KOLON: İş Detayları (%70) */}
           <div className="w-full lg:w-[70%] space-y-8">
+            {/* KABUL EDİLDİ BANNER */}
+            {applicationStatus === 'ACCEPTED' && (
+              <div className="bg-green-400 border-[4px] border-black shadow-brutal p-5 flex items-center gap-4 -rotate-1 hover:rotate-0 transition-transform">
+                <div className="h-12 w-12 shrink-0 bg-white border-[3px] border-black flex items-center justify-center text-2xl font-black">
+                  ✓
+                </div>
+                <div>
+                  <p className="text-xl font-black text-black uppercase tracking-wide">Bu ilana kabul edildiniz!</p>
+                  <p className="text-sm font-bold text-black/80 mt-0.5">İşveren başvurunuzu onayladı. İyi çalışmalar!</p>
+                </div>
+              </div>
+            )}
+
             <div className="bg-[#fdfbf7] p-8 sm:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-[4px] border-black">
               {/* Header / Title */}
               <div>
                 <div className="flex items-center gap-4 mb-6">
-                  <span className={`inline-block border-2 border-black px-4 py-1.5 text-sm font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-2 ${job.status === 'OPEN' ? 'bg-green-300' : 'bg-gray-300'}`}>
-                    {job.status === 'OPEN' ? 'AÇIK BAŞVURU' : job.status}
+                  <span className={`inline-block border-2 border-black px-4 py-1.5 text-sm font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-2 ${
+                    job.status === 'OPEN' ? 'bg-green-300' :
+                    job.status === 'IN_PROGRESS' ? 'bg-brutal-blue text-white' :
+                    job.status === 'COMPLETED' ? 'bg-gray-300' :
+                    'bg-brutal-pink'
+                  }`}>
+                    {job.status === 'OPEN' ? 'AÇIK BAŞVURU' :
+                     job.status === 'IN_PROGRESS' ? 'DEVAM EDİYOR' :
+                     job.status === 'COMPLETED' ? 'TAMAMLANDI' :
+                     job.status}
                   </span>
                   <span className="text-sm font-bold text-black flex items-center gap-1.5 bg-gray-200 border-2 border-black px-3 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-1">
                     <Clock className="h-4 w-4" strokeWidth={2.5} />
@@ -275,7 +292,16 @@ export default function JobDetailsPage() {
 
               {/* Action Button */}
               {!isCustomer ? (
-                 hasApplied ? (
+                (applicationStatus === 'ACCEPTED' || applicationStatus === 'REJECTED') ? (
+                  <div className={`w-full flex flex-col items-center justify-center gap-2 px-6 py-5 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center cursor-not-allowed ${applicationStatus === 'ACCEPTED' ? 'bg-green-200' : 'bg-gray-200'}`}>
+                    <span className="text-base font-black text-black uppercase tracking-wide">
+                      Bu ilana başvurunuz sonuçlanmıştır
+                    </span>
+                    <span className={`inline-block px-4 py-1.5 border-[3px] border-black font-black text-sm uppercase shadow-brutal-sm ${applicationStatus === 'ACCEPTED' ? 'bg-green-400 text-black' : 'bg-red-300 text-black'}`}>
+                      {applicationStatus === 'ACCEPTED' ? '✓ Kabul Edildi' : '✕ Reddedildi'}
+                    </span>
+                  </div>
+                ) : hasApplied ? (
                    <button 
                     onClick={handleCancelApplication}
                     disabled={isSubmitting}
@@ -284,7 +310,7 @@ export default function JobDetailsPage() {
                      <Trash2 className="h-6 w-6" strokeWidth={3} />
                      {isSubmitting ? 'İPTAL EDİLİYOR...' : 'BAŞVURUYU İPTAL ET'}
                    </button>
-                 ) : (
+                ) : (
                    <button 
                     onClick={handleOpenModal}
                     disabled={job.status !== 'OPEN' || isSubmitting}
@@ -293,7 +319,7 @@ export default function JobDetailsPage() {
                      <Send className="h-6 w-6" strokeWidth={3} />
                      {job.status === 'OPEN' ? 'HEMEN BAŞVUR' : 'BAŞVURUYA KAPALI'}
                    </button>
-                 )
+                )
               ) : (
                 <div className="w-full bg-gray-200 border-[4px] border-black px-6 py-5 text-center text-base font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -rotate-1">
                   İŞVERENLER BAŞVURU YAPAMAZ.
