@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Briefcase, Mail, Lock } from 'lucide-react';
+import { Briefcase, Mail, Lock, AlertCircle } from 'lucide-react';
 import api from '@/lib/axios';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -20,12 +20,8 @@ export default function LoginPage() {
     try {
       setLoading(true);
       setError('');
-      // Adjust endpoint matching your NestJS backend
       const response = await api.post('/auth/login', { email, password });
-      
-      // NestJS auth service returns { message, session: { user, access_token, ... } }
       const { user, access_token } = response.data.session;
-      
       login(user, access_token);
       router.push('/');
     } catch (err: any) {
@@ -36,33 +32,43 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-10 shadow-xl ring-1 ring-gray-200">
-        <div className="text-center">
-          <Briefcase className="mx-auto h-12 w-12 text-blue-600" />
-          <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-gray-900">
-            Tekrar Hoş Geldiniz
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Devam etmek için hesabınıza giriş yapın
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#fdfbf7] px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md">
+
+        {/* Header Sticker */}
+        <div className="mb-8 text-center">
+          <div className="inline-flex items-center justify-center h-16 w-16 bg-brutal-yellow border-[3px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-5 rotate-3 hover:rotate-0 transition-transform">
+            <Briefcase className="h-8 w-8 text-black" strokeWidth={2.5} />
+          </div>
+          <h1 className="text-4xl font-black text-black uppercase tracking-tight">
+            Tekrar<br />
+            <span className="bg-brutal-yellow px-2 -rotate-1 inline-block">Hoş Geldin!</span>
+          </h1>
+          <p className="mt-3 text-base font-bold text-black/60">
+            Hesabına giriş yap, fırsatları yakala.
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Form Card */}
+        <div className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-8">
+
+          {/* Error Banner */}
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-800">{error}</p>
+            <div className="mb-6 flex items-start gap-3 bg-brutal-pink border-[3px] border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -rotate-1">
+              <AlertCircle className="h-5 w-5 mt-0.5 shrink-0 text-black" strokeWidth={2.5} />
+              <p className="text-sm font-bold text-black">{error}</p>
             </div>
           )}
 
-          <div className="space-y-4">
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="email">
+              <label className="block text-sm font-black text-black uppercase mb-2" htmlFor="email">
                 E-posta Adresi
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-black/40" strokeWidth={2} />
                 </div>
                 <input
                   id="email"
@@ -72,19 +78,20 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-lg border-gray-300 pl-10 py-2.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                  className="block w-full border-[2px] border-black bg-white pl-10 py-3 text-black font-bold placeholder:text-black/30 focus:bg-amber-50 focus:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] outline-none transition-all"
                   placeholder="siz@ornek.com"
                 />
               </div>
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="password">
+              <label className="block text-sm font-black text-black uppercase mb-2" htmlFor="password">
                 Şifre
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <Lock className="h-5 w-5 text-black/40" strokeWidth={2} />
                 </div>
                 <input
                   id="password"
@@ -94,28 +101,37 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-lg border-gray-300 pl-10 py-2.5 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                  className="block w-full border-[2px] border-black bg-white pl-10 py-3 text-black font-bold placeholder:text-black/30 focus:bg-amber-50 focus:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] outline-none transition-all"
                   placeholder="••••••••"
                 />
               </div>
             </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full justify-center rounded-lg bg-blue-600 px-3 py-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
-            >
-              {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
-            </button>
-          </div>
-        </form>
+            {/* Submit Button */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                id="login-submit-btn"
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 bg-green-400 px-6 py-4 text-base font-black text-black uppercase tracking-wider border-[3px] border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] disabled:cursor-not-allowed transition-all"
+              >
+                {loading ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-black/30 border-t-black" />
+                ) : null}
+                {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap →'}
+              </button>
+            </div>
+          </form>
+        </div>
 
-        <p className="mt-8 text-center text-sm text-gray-500">
-          Hesabınız yok mu?{' '}
-          <Link href="/register" className="font-semibold text-blue-600 hover:text-blue-500 transition-colors">
-            Hesap oluşturun
+        {/* Footer Link */}
+        <p className="mt-6 text-center text-sm font-bold text-black">
+          Hesabın yok mu?{' '}
+          <Link
+            href="/register"
+            className="font-black text-black underline decoration-2 underline-offset-2 hover:bg-brutal-yellow transition-colors px-1"
+          >
+            Kayıt Ol
           </Link>
         </p>
       </div>
