@@ -31,6 +31,16 @@ model User {
 
   freelancerProfile FreelancerProfile?
   customerProfile   CustomerProfile?
+  notifications     Notification[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model FreelancerProfile {
