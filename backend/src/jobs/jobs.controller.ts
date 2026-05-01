@@ -64,4 +64,19 @@ export class JobsController {
   getJobApplications(@Param('id') id: string, @Req() req: any) {
     return this.jobsService.getJobApplications(id, req.user.id);
   }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.jobsService.findById(id);
+  }
+
+  @Patch('applications/:applicationId/status')
+  updateApplicationStatus(
+    @Param('applicationId') applicationId: string,
+    @Body('status') status: 'ACCEPTED' | 'REJECTED',
+    @Req() req: any,
+  ) {
+    return this.jobsService.updateApplicationStatus(applicationId, status, req.user.id);
+  }
 }
+
