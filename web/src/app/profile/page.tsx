@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { supabase } from '@/lib/supabase';
 import api from '@/lib/axios';
-import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload } from 'lucide-react';
+import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload, Clock } from 'lucide-react';
 import Image from 'next/image';
 
 export default function ProfilePage() {
@@ -45,20 +45,19 @@ export default function ProfilePage() {
           portfolioUrl: res.data.portfolioUrl || '',
         });
         
-        if (res.data.role === 'CUSTOMER') {
+        if (res.data.role === 'CUSTOMER' && activeTab === 'Temel Bilgiler') {
           setActiveTab('Profil Ayarları');
-        } else if (res.data.role === 'FREELANCER') {
+        } else if (res.data.role === 'FREELANCER' && activeTab === 'Profil Ayarları') {
           setActiveTab('Temel Bilgiler');
         }
       } catch { }
     };
     
-    if (user) {
+    // Yalnızca kullanıcı hydrate olduysa ve giriş yaptıysa çek
+    if (user?.id) {
       fetchProfile();
-      if (user.role === 'CUSTOMER' && activeTab === 'Temel Bilgiler') setActiveTab('Profil Ayarları');
-      else if (user.role === 'FREELANCER' && activeTab === 'Profil Ayarları') setActiveTab('Temel Bilgiler');
     }
-  }, []);
+  }, [user?.id]); // Yalnızca id değiştiğinde (örn: ilk hydrate) çalışır, sonsuz döngüyü önler
 
   useEffect(() => {
     if (user) {
@@ -538,9 +537,11 @@ export default function ProfilePage() {
           )}
 
           {user.role === 'FREELANCER' && activeTab === 'İşlerim & Başvurular' && <FreelancerJobsTab />}
+          
+          {user.role === 'FREELANCER' && activeTab === 'Değerlendirmeler' && <FreelancerReviewsTab />}
 
           {((user.role === 'CUSTOMER' && activeTab !== 'Profil Ayarları' && activeTab !== 'İlanlarım' && activeTab !== 'Aktif İşlerim') || 
-            (user.role === 'FREELANCER' && activeTab !== 'Temel Bilgiler' && activeTab !== 'Özgeçmiş & Portfolyo' && activeTab !== 'İşlerim & Başvurular')) && (
+            (user.role === 'FREELANCER' && activeTab !== 'Temel Bilgiler' && activeTab !== 'Özgeçmiş & Portfolyo' && activeTab !== 'İşlerim & Başvurular' && activeTab !== 'Değerlendirmeler')) && (
             <div className="flex flex-col items-center justify-center min-h-[500px] bg-brutal-blue border-[4px] border-black shadow-brutal p-12 text-center -rotate-1">
               <div className="h-24 w-24 bg-brutal-yellow border-[3px] border-black shadow-brutal flex items-center justify-center mb-8 rotate-3">
                 <Settings className="h-12 w-12 text-black animate-[spin_4s_linear_infinite]" strokeWidth={2.5} />
@@ -564,8 +565,18 @@ function MyJobsTab() {
   const [applications, setApplications] = useState<any[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
+  const [activeInner, setActiveInner] = useState<'active' | 'completed'>('active');
+
+  // Review Modal state
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewScore, setReviewScore] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const cardColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200', 'bg-purple-200'];
+
+  const activeJobsList = jobs.filter(j => j.status !== 'COMPLETED');
+  const completedJobsList = jobs.filter(j => j.status === 'COMPLETED');
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -621,6 +632,36 @@ function MyJobsTab() {
     }
   };
 
+  const handleOpenReviewModal = (job: any) => {
+    setSelectedJob(job);
+    setReviewScore(5);
+    setReviewComment('');
+    setIsReviewModalOpen(true);
+  };
+
+  const handleCompleteJob = async () => {
+    if (!selectedJob) return;
+    try {
+      setSubmittingReview(true);
+      // Backend handles if review already exists or job is not completed.
+      // Since it's already COMPLETED, we only post the review.
+      await api.post('/reviews', {
+        jobId: selectedJob.id,
+        score: reviewScore,
+        comment: reviewComment,
+      });
+
+      setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, review: { score: reviewScore, comment: reviewComment } } : j));
+
+      setIsReviewModalOpen(false);
+      alert('Değerlendirmeniz başarıyla kaydedildi.');
+    } catch (err) {
+      console.error('Değerlendirme yapılırken hata oluştu', err);
+      alert('Değerlendirme sırasında bir hata oluştu.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -739,13 +780,28 @@ function MyJobsTab() {
                       </div>
                       )
                     ) : (
-                      <div className={`flex items-center justify-center gap-2 flex-1 px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal-sm text-sm text-black ${app.status === 'ACCEPTED' ? 'bg-green-300' : 'bg-red-300'}`}>
-                        {app.status === 'ACCEPTED' ? (
-                          <><CheckCircle2 className="h-5 w-5" strokeWidth={2.5} /> KABUL EDİLDİ</>
+                      app.status === 'ACCEPTED' ? (
+                        selectedJob.status === 'IN_PROGRESS' ? (
+                          <button
+                            onClick={() => handleOpenReviewModal(selectedJob)}
+                            className="flex-1 bg-brutal-blue text-white px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm"
+                          >
+                            İŞİ TAMAMLA & DEĞERLENDİR
+                          </button>
+                        ) : selectedJob.status === 'COMPLETED' ? (
+                          <div className="flex items-center justify-center gap-2 flex-1 px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal-sm text-sm text-black bg-gray-300">
+                            <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} /> TAMAMLANDI & DEĞERLENDİRİLDİ
+                          </div>
                         ) : (
-                          <><X className="h-5 w-5" strokeWidth={2.5} /> REDDEDİLDİ</>
-                        )}
-                      </div>
+                          <div className="flex items-center justify-center gap-2 flex-1 px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal-sm text-sm text-black bg-green-300">
+                            <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} /> KABUL EDİLDİ
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex items-center justify-center gap-2 flex-1 px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal-sm text-sm text-black bg-red-300">
+                          <X className="h-5 w-5" strokeWidth={2.5} /> REDDEDİLDİ
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
@@ -754,6 +810,49 @@ function MyJobsTab() {
             </div>
           )}
         </div>
+
+        {/* REVIEW MODAL */}
+        {isReviewModalOpen && selectedJob && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div className="bg-[#f4f0eb] border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-lg w-full p-8 relative">
+              <button onClick={() => setIsReviewModalOpen(false)} className="absolute top-4 right-4 bg-white border-2 border-black p-1 hover:bg-brutal-pink hover:rotate-6 transition-all shadow-brutal-sm">
+                <X className="h-6 w-6 text-black" strokeWidth={2.5} />
+              </button>
+              <h2 className="text-3xl font-black uppercase text-black mb-2 border-b-4 border-black pb-4">İşi Değerlendir</h2>
+              <p className="font-bold text-gray-800 mb-6 text-sm">İşi tamamlamak üzeresiniz. Lütfen freelancer'ı değerlendirin.</p>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-black text-black mb-3 uppercase">Puanınız</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button key={star} type="button" onClick={() => setReviewScore(star)} className="hover:scale-110 transition-transform focus:outline-none">
+                      <Star className={`h-10 w-10 ${star <= reviewScore ? 'fill-brutal-yellow text-black' : 'fill-white text-black drop-shadow-sm'} `} strokeWidth={2.5} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <label className="block text-sm font-black text-black mb-3 uppercase">Yorumunuz</label>
+                <textarea 
+                  rows={4} 
+                  className="w-full bg-white border-[3px] border-black p-4 font-bold text-black shadow-brutal-sm focus:outline-none focus:ring-4 focus:ring-brutal-yellow/50 transition-all" 
+                  placeholder="Freelancer hakkında düşüncelerinizi yazın..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                />
+              </div>
+
+              <button 
+                onClick={handleCompleteJob}
+                disabled={submittingReview || !reviewComment.trim()}
+                className="w-full bg-brutal-blue text-white py-4 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-brutal text-lg tracking-wider"
+              >
+                {submittingReview ? 'KAYDEDİLİYOR...' : 'ONAYLA & TAMAMLA'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -771,18 +870,36 @@ function MyJobsTab() {
         </div>
       </div>
 
-      <div className="p-8 flex-1 bg-brutal-bg">
-        {jobs.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
-              <Briefcase className="h-10 w-10 text-black" strokeWidth={2.5} />
+      <div className="flex border-b-[3px] border-black">
+        <button
+          onClick={() => setActiveInner('active')}
+          className={`flex-1 py-4 font-black uppercase text-sm tracking-wide border-r-[3px] border-black transition-all ${activeInner === 'active' ? 'bg-brutal-blue text-white' : 'bg-white hover:bg-gray-50 text-black'}`}
+        >
+          Aktif İlanlar
+          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{activeJobsList.length}</span>
+        </button>
+        <button
+          onClick={() => setActiveInner('completed')}
+          className={`flex-1 py-4 font-black uppercase text-sm tracking-wide transition-all ${activeInner === 'completed' ? 'bg-green-400 text-black' : 'bg-white hover:bg-gray-50 text-black'}`}
+        >
+          Tamamlanmış İşler
+          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{completedJobsList.length}</span>
+        </button>
+      </div>
+
+      {activeInner === 'active' && (
+        <div className="p-8 flex-1 bg-brutal-bg">
+          {activeJobsList.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
+                <Briefcase className="h-10 w-10 text-black" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-2xl font-black text-black uppercase mb-2">İLAN YOK</h3>
+              <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Yeni bir ilan oluşturarak freelancer'larla çalışmaya başlayın.</p>
             </div>
-            <h3 className="text-2xl font-black text-black uppercase mb-2">İLAN YOK</h3>
-            <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Yeni bir ilan oluşturarak freelancer'larla çalışmaya başlayın.</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {jobs.map((job) => {
+          ) : (
+            <div className="space-y-6">
+            {activeJobsList.map((job) => {
               const appCount = job._count?.applications ?? 0;
               return (
                 <div key={job.id} className="relative bg-white border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all group">
@@ -820,7 +937,74 @@ function MyJobsTab() {
             })}
           </div>
         )}
-      </div>
+        </div>
+      )}
+
+      {activeInner === 'completed' && (
+        <div className="p-8 flex-1 bg-brutal-bg">
+          {completedJobsList.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
+                <CheckCircle2 className="h-10 w-10 text-black" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-2xl font-black text-black uppercase mb-2">TAMAMLANMIŞ İŞ YOK</h3>
+              <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Henüz tamamlanan bir işiniz bulunmuyor.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {completedJobsList.map((job) => {
+                return (
+                  <div key={job.id} className="relative bg-white border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all group">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-black text-black uppercase mb-3">{job.title}</h3>
+                        <div className="flex flex-wrap items-center gap-3 mb-4">
+                          <span className="inline-block bg-gray-300 text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm -rotate-2 text-sm">TAMAMLANDI</span>
+                          {job.freelancer?.user && (
+                            <span className="text-black bg-blue-100 px-2 py-1 border-2 border-black font-bold text-sm">
+                              Freelancer: {job.freelancer.user.name}
+                            </span>
+                          )}
+                          <span className="text-black bg-gray-200 px-2 py-1 border-2 border-black font-bold text-sm">
+                            {new Date(job.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                        
+                        {job.review ? (
+                          <div className="bg-[#f4f0eb] border-2 border-black p-4 shadow-brutal-sm relative -rotate-1 w-full max-w-2xl">
+                            <div className="absolute -top-3 left-8 w-12 h-5 bg-white/40 border-2 border-black -rotate-2 backdrop-blur-sm"></div>
+                            <div className="flex items-center gap-1 mb-2">
+                              {[1, 2, 3, 4, 5].map(star => (
+                                <Star key={star} className={`h-5 w-5 ${star <= job.review.score ? 'fill-brutal-yellow text-black' : 'fill-transparent text-gray-400'}`} strokeWidth={2.5} />
+                              ))}
+                              <span className="ml-3 text-xs font-black uppercase text-gray-500">Değerlendirmeniz</span>
+                            </div>
+                            <p className="text-sm font-bold text-black italic">"{job.review.comment}"</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-100 border-2 border-black p-4 mt-2 max-w-2xl">
+                            <div className="flex-1 text-sm font-bold text-gray-600 uppercase flex items-center gap-2">
+                              <AlertCircle className="h-5 w-5 text-brutal-pink" strokeWidth={2.5} />
+                              Bu iş için henüz değerlendirme yapmadınız.
+                            </div>
+                            <button 
+                              onClick={() => handleOpenReviewModal(job)}
+                              className="shrink-0 bg-brutal-yellow text-black px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-sm flex items-center gap-2"
+                            >
+                              <Star className="h-4 w-4" strokeWidth={2.5} /> DEĞERLENDİR
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
@@ -843,7 +1027,7 @@ function FreelancerJobsTab() {
         // PENDING ve REJECTED olanlar "Başvurularım" sekmesinde
         setApplications(appsRes.data.filter((a: any) => a.status !== 'ACCEPTED'));
         // ACCEPTED başvurular + atanmış işler "Aktif İşlerim" sekmesinde
-        const assignedJobs = jobsRes.data.filter((j: any) => j.freelancerId);
+        const assignedJobs = jobsRes.data.filter((j: any) => j.freelancerId && j.status !== 'COMPLETED');
         const acceptedApps = appsRes.data.filter((a: any) => a.status === 'ACCEPTED');
         setActiveJobs({ assignedJobs, acceptedApps });
       } catch (err) {
@@ -854,6 +1038,15 @@ function FreelancerJobsTab() {
     };
     fetchData();
   }, []);
+
+  const handleFreelancerComplete = async (jobId: string) => {
+    try {
+      await api.patch(`/jobs/${jobId}/complete`);
+      window.location.reload();
+    } catch (err) {
+      alert("İş tamamlanırken bir hata oluştu.");
+    }
+  };
 
   if (loading) {
     return (
@@ -993,9 +1186,19 @@ function FreelancerJobsTab() {
                         {job.category && <span className="bg-black text-white px-2 py-0.5 text-xs font-black">{job.category}</span>}
                       </div>
                     </div>
-                    <a href={`/jobs/${job.id}`} className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-xs">
-                      <Briefcase className="h-4 w-4" strokeWidth={2.5} /> DETAYLARA GİT
-                    </a>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <a href={`/jobs/${job.id}`} className="inline-flex items-center justify-center gap-2 bg-white text-black px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-xs">
+                        <Briefcase className="h-4 w-4" strokeWidth={2.5} /> DETAYLARA GİT
+                      </a>
+                      {job.status === 'IN_PROGRESS' && (
+                        <button 
+                          onClick={() => handleFreelancerComplete(job.id)}
+                          className="inline-flex items-center justify-center gap-2 bg-brutal-blue text-white px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-xs"
+                        >
+                          <CheckCircle2 className="h-4 w-4" strokeWidth={2.5} /> İŞİ TAMAMLADIM
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1003,6 +1206,103 @@ function FreelancerJobsTab() {
           )}
         </div>
       )}
+
+    </div>
+  );
+}
+
+function FreelancerReviewsTab() {
+  const [completedJobs, setCompletedJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await api.get('/jobs/my-jobs');
+        const completed = res.data.filter((j: any) => j.freelancerId && j.status === 'COMPLETED');
+        setCompletedJobs(completed);
+      } catch (err) {
+        console.error('Veriler alinamadi', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] bg-white border-[3px] border-black shadow-brutal">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-brutal-yellow"></div>
+        <p className="mt-4 text-base font-black uppercase">Yukleniyor...</p>
+      </div>
+    );
+  }
+
+  // Calculate average score
+  const reviewedJobs = completedJobs.filter(j => j.review);
+  const totalScore = reviewedJobs.reduce((acc, j) => acc + j.review.score, 0);
+  const averageScore = reviewedJobs.length > 0 ? (totalScore / reviewedJobs.length) : 0;
+
+  return (
+    <div className="bg-white border-[3px] border-black shadow-brutal flex flex-col min-h-[500px]">
+      <div className="border-b-[3px] border-black p-6 bg-brutal-pink text-black flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black uppercase tracking-wide">Değerlendirmelerim</h1>
+          <p className="mt-1 text-sm font-bold">Tamamladığınız işler ve müşteri yorumları.</p>
+        </div>
+        {reviewedJobs.length > 0 && (
+          <div className="flex items-center gap-2 bg-brutal-yellow border-[3px] border-black px-4 py-2 shadow-brutal-sm rotate-2">
+            <span className="text-2xl font-black">{averageScore.toFixed(1)}</span>
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map(star => (
+                <Star key={star} className={`h-5 w-5 ${star <= Math.round(averageScore) ? 'fill-black text-black' : 'fill-transparent text-gray-500'}`} strokeWidth={2.5} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="p-8 flex-1 bg-brutal-bg">
+        {completedJobs.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
+              <CheckCircle2 className="h-10 w-10 text-black" strokeWidth={2.5} />
+            </div>
+            <h3 className="text-2xl font-black text-black uppercase mb-2">Tamamlanmış İş Yok</h3>
+            <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Henüz tamamladığınız bir iş bulunmuyor.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {completedJobs.map((job: any) => (
+              <div key={job.id} className="bg-white border-[4px] border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all group">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                  <h3 className="text-2xl font-black uppercase line-clamp-2 flex-1">{job.title || 'İsimsiz İş'}</h3>
+                  
+                  {job.review && (
+                    <div className="flex items-center gap-1 shrink-0 bg-gray-100 border-2 border-black px-3 py-1">
+                      <span className="font-black mr-2">{job.review.score}.0</span>
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <Star key={star} className={`h-5 w-5 ${star <= job.review.score ? 'fill-brutal-yellow text-black' : 'fill-transparent text-gray-400'}`} strokeWidth={2.5} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {job.review ? (
+                  <p className="font-bold text-lg text-gray-800 italic border-l-4 border-brutal-yellow pl-4 whitespace-pre-wrap">
+                    "{job.review.comment}"
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-2 font-bold text-gray-500 uppercase bg-gray-100 p-4 border-2 border-black">
+                    <Clock className="h-5 w-5" /> İşveren henüz değerlendirme yapmadı.
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
