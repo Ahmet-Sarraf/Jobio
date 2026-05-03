@@ -93,4 +93,92 @@ export class UsersService {
       portfolioUrl: updatedUser.freelancerProfile?.portfolioUrl ?? null,
     };
   }
+
+  async getFreelancerProfile(freelancerId: string) {
+    const freelancer = await this.prisma.freelancerProfile.findUnique({
+      where: { id: freelancerId },
+      include: {
+        user: { select: { name: true, avatarUrl: true, email: true } },
+        skills: true,
+      },
+    });
+
+    if (!freelancer) throw new NotFoundException('Freelancer bulunamadı.');
+
+    return {
+      id: freelancer.id,
+      userId: freelancer.userId,
+      name: freelancer.user.name,
+      avatarUrl: freelancer.user.avatarUrl,
+      email: freelancer.user.email,
+      bio: freelancer.bio,
+      hourlyRate: freelancer.hourlyRate,
+      portfolioUrl: freelancer.portfolioUrl,
+      resumeUrl: freelancer.resumeUrl,
+      skills: freelancer.skills,
+      createdAt: freelancer.createdAt,
+    };
+  }
+  async getAllFreelancers(query: any) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const q = query.q || '';
+    const skill = query.skill || '';
+
+    const where: any = {};
+    if (q) {
+      where.OR = [
+        { user: { name: { contains: q, mode: 'insensitive' } } },
+        { bio: { contains: q, mode: 'insensitive' } }
+      ];
+    }
+    if (skill) {
+      where.skills = {
+        some: {
+          name: { contains: skill, mode: 'insensitive' }
+        }
+      };
+    }
+
+    const [freelancers, total] = await Promise.all([
+      this.prisma.freelancerProfile.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          user: { select: { name: true, avatarUrl: true } },
+          skills: true,
+          reviews: { select: { score: true } },
+        },
+        orderBy: { createdAt: 'desc' }
+      }),
+      this.prisma.freelancerProfile.count({ where })
+    ]);
+
+    const data = freelancers.map(f => {
+      const totalScore = f.reviews.reduce((acc, r) => acc + r.score, 0);
+      const averageScore = f.reviews.length > 0 ? (totalScore / f.reviews.length) : 0;
+      return {
+        id: f.id,
+        userId: f.userId,
+        name: f.user.name,
+        avatarUrl: f.user.avatarUrl,
+        bio: f.bio,
+        skills: f.skills,
+        averageScore,
+        totalReviews: f.reviews.length,
+      };
+    });
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
 }
