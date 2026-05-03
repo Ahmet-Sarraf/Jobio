@@ -42,9 +42,25 @@ export class JobsService {
     });
   }
 
-  async findAllOpenJobs() {
+  async findAllOpenJobs(query?: any) {
+    const q = query?.search || '';
+    const category = query?.category || '';
+
+    const where: any = { status: 'OPEN' };
+
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    if (category) {
+      where.category = category;
+    }
+
     return this.prisma.job.findMany({
-      where: { status: 'OPEN' },
+      where,
       include: {
         customer: {
           include: {

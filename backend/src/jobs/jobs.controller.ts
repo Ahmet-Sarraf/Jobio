@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Query } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { AssignJobDto } from './dto/assign-job.dto';
@@ -16,9 +16,8 @@ export class JobsController {
   }
 
   @Get()
-  findAll() {
-    console.log("SECRET IN CONTROLLER:", process.env.SUPABASE_JWT_SECRET);
-    return this.jobsService.findAllOpenJobs();
+  findAll(@Query() query: any) {
+    return this.jobsService.findAllOpenJobs(query);
   }
 
   @Get('my-jobs')
