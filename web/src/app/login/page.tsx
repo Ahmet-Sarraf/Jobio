@@ -21,8 +21,13 @@ export default function LoginPage() {
       setLoading(true);
       setError('');
       const response = await api.post('/auth/login', { email, password });
-      const { user, access_token } = response.data.session;
-      login(user, access_token);
+      const { user: supaUser, access_token } = response.data.session;
+      const formattedUser = {
+        ...supaUser,
+        role: supaUser.user_metadata?.user_role,
+        name: supaUser.user_metadata?.name || '',
+      };
+      login(formattedUser, access_token);
       router.push('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Giriş başarısız. Bilgilerinizi kontrol edin.');

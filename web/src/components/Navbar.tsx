@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LogOut, User as UserIcon, Briefcase, PlusCircle, Bell, X, CheckCheck } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
@@ -14,6 +15,7 @@ interface Notification {
 }
 
 export default function Navbar() {
+  const router = useRouter();
   const { user, isAuthenticated, logout } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -70,18 +72,32 @@ export default function Navbar() {
     } catch {}
   };
 
-  const handleLogout = () => logout();
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b-[4px] border-black bg-white">
       <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <div className="bg-brutal-yellow border-2 border-black p-1 rounded-sm shadow-brutal-sm">
-            <Briefcase className="h-6 w-6 text-black" strokeWidth={2.5} />
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <div className="bg-brutal-yellow border-2 border-black p-1 rounded-sm shadow-brutal-sm">
+              <Briefcase className="h-6 w-6 text-black" strokeWidth={2.5} />
+            </div>
+            <Link href="/" className="text-2xl font-black tracking-tight text-black flex items-center gap-1">
+              JOB<span className="text-brutal-blue">IO</span>
+            </Link>
           </div>
-          <Link href="/" className="text-2xl font-black tracking-tight text-black flex items-center gap-1">
-            JOB<span className="text-brutal-blue">IO</span>
-          </Link>
+          
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="/" className="font-black text-black hover:underline decoration-4 underline-offset-4 decoration-brutal-blue transition-all">
+              İş İlanları
+            </Link>
+            <Link href="/freelancers" className="font-black text-black hover:underline decoration-4 underline-offset-4 decoration-brutal-pink transition-all">
+              Freelancerlar
+            </Link>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

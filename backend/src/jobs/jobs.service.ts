@@ -56,6 +56,7 @@ export class JobsService {
         requiredSkills: true,
       },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
   }
 
@@ -108,6 +109,7 @@ export class JobsService {
         },
       },
       orderBy: { createdAt: 'desc' },
+      take: 50,
     });
   }
 
@@ -173,25 +175,48 @@ export class JobsService {
   async completeJob(jobId: string, userId: string) {
     const job = await this.prisma.job.findUnique({
       where: { id: jobId },
-      include: { customer: true },
+      include: { 
+        customer: true,
+        freelancer: { include: { user: true } }
+      },
     });
 
     if (!job) {
       throw new NotFoundException('İş bulunamadı.');
     }
 
-    if (job.customer.userId !== userId) {
-      throw new ForbiddenException('Sadece kendi açtığınız işi tamamlayabilirsiniz.');
+    const isCustomer = job.customer.userId === userId;
+    const isFreelancer = job.freelancer?.userId === userId;
+
+    if (!isCustomer && !isFreelancer) {
+      throw new ForbiddenException('Bu işi tamamlamak için yetkiniz yok.');
     }
 
     if (job.status !== 'IN_PROGRESS') {
       throw new BadRequestException('Sadece IN_PROGRESS statüsündeki işler tamamlanabilir.');
     }
 
-    return this.prisma.job.update({
+    await this.prisma.application.updateMany({
+      where: { jobId, status: 'ACCEPTED' },
+      data: { status: 'COMPLETED' },
+    });
+
+    const updatedJob = await this.prisma.job.update({
       where: { id: jobId },
       data: { status: 'COMPLETED' },
     });
+
+    if (isFreelancer && job.freelancer?.user) {
+      const freelancerName = job.freelancer.user.name || 'Freelancer';
+      await this.prisma.notification.create({
+        data: {
+          userId: job.customer.userId,
+          message: `${freelancerName}, ${job.title} isimli işi tamamladı. Kontrol edip değerlendirmek için tıklayın.`,
+        }
+      });
+    }
+
+    return updatedJob;
   }
 
   async applyJob(jobId: string, applyJobDto: ApplyJobDto, userId: string) {
