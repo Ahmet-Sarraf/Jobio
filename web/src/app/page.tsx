@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/axios';
-import { DollarSign, Briefcase, FileText } from 'lucide-react';
+import { DollarSign, Briefcase, FileText, Search } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,10 +14,13 @@ interface Job {
   budget?: number;
   status: string;
   createdAt: string;
+  category?: string;
   customer?: {
     name: string;
   };
 }
+
+const CATEGORIES = ['Web Geliştirme', 'Mobil Uygulama', 'UI/UX Tasarım', 'Dijital Pazarlama', 'Veri Bilimi', 'İçerik Üretimi'];
 
 export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -27,6 +30,26 @@ export default function Home() {
   const { isAuthenticated, user, _hasHydrated } = useAuthStore();
   const router = useRouter();
 
+  // Search and Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+
+  const fetchJobs = async () => {
+    try {
+      setLoading(true);
+      const params: any = {};
+      if (searchQuery) params.search = searchQuery;
+      if (selectedCategory) params.category = selectedCategory;
+
+      const response = await api.get('/jobs', { params });
+      setJobs(response.data);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'İlanlar yüklenirken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!_hasHydrated) return;
     if (isAuthenticated) {
@@ -35,7 +58,7 @@ export default function Home() {
     } else {
       setLoading(false);
     }
-  }, [isAuthenticated, _hasHydrated, router]);
+  }, [isAuthenticated, _hasHydrated, selectedCategory]);
 
   const fetchMyApplications = async () => {
     try {
@@ -47,19 +70,12 @@ export default function Home() {
     } catch {}
   };
 
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/jobs');
-      setJobs(response.data);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'İlanlar yüklenirken bir hata oluştu');
-    } finally {
-      setLoading(false);
-    }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchJobs();
   };
 
-  if (loading) {
+  if (loading && jobs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="h-16 w-16 border-4 border-black border-t-brutal-yellow animate-spin shadow-brutal-sm bg-white"></div>
@@ -90,13 +106,45 @@ export default function Home() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full">
-      <div className="mb-12 text-center sm:text-left bg-brutal-blue text-white border-4 border-black p-8 shadow-brutal inline-block -rotate-1 hover:rotate-0 transition-transform">
-        <h1 className="text-4xl md:text-5xl font-black uppercase tracking-wider">
-          En Yeni İlanlar
-        </h1>
-        <p className="mt-3 text-lg font-bold">
-          Sizin için en uygun fırsatları inceleyin ve başvurunuzu yapın.
-        </p>
+      {/* Neo-Brutalist Search System */}
+      <div className="mb-12">
+        <form onSubmit={handleSearch} className="relative flex items-stretch w-full max-w-4xl mx-auto shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all group">
+          <div className="flex items-center justify-center bg-brutal-yellow border-y-[4px] border-l-[4px] border-black px-6">
+            <Search className="h-8 w-8 text-black" strokeWidth={3} />
+          </div>
+          <input 
+            type="text" 
+            placeholder="İlan ara... (örn: frontend, ui/ux, tasarım)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border-y-[4px] border-black p-5 md:p-6 text-xl md:text-2xl font-black text-black placeholder:text-black/30 outline-none focus:bg-amber-50 transition-colors"
+          />
+          <button 
+            type="submit"
+            className="bg-brutal-blue text-white px-8 md:px-12 text-xl font-black uppercase border-[4px] border-black shrink-0 hover:bg-black transition-colors"
+          >
+            ARA
+          </button>
+        </form>
+
+        {/* Category Pills */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:gap-4 max-w-5xl mx-auto">
+          <button 
+            onClick={() => setSelectedCategory('')}
+            className={`px-5 py-2 font-black uppercase border-[3px] border-black transition-transform hover:-translate-y-1 shadow-brutal-sm ${selectedCategory === '' ? 'bg-black text-white' : 'bg-white text-black'}`}
+          >
+            TÜMÜ
+          </button>
+          {CATEGORIES.map(cat => (
+            <button 
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-5 py-2 font-black uppercase border-[3px] border-black transition-transform hover:-translate-y-1 shadow-brutal-sm ${selectedCategory === cat ? 'bg-brutal-pink text-black' : 'bg-white text-black'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
       {jobs.length === 0 ? (
