@@ -41,6 +41,8 @@ model Notification {
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
 }
 
 model FreelancerProfile {
@@ -97,6 +99,9 @@ model Job {
 
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
+
+  @@index([status])
+  @@index([customerId])
 }
 
 model Review {
@@ -139,4 +144,6 @@ model Application {
   updatedAt    DateTime          @updatedAt
   
   @@unique([jobId, freelancerId])
+  @@index([status])
+  @@index([jobId])
 }

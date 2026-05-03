@@ -7,7 +7,7 @@ export class CreateReviewDto {
 
   @IsNumber({}, { message: 'Puan sayısal bir değer olmalıdır.' })
   @Min(1, { message: 'Puan en az 1 olmalıdır.' })
-  @Max(10, { message: 'Puan en fazla 10 olmalıdır.' })
+  @Max(5, { message: 'Puan en fazla 5 olmalıdır.' })
   score: number;
 
   @IsString({ message: 'Yorum metin formatında olmalıdır.' })
