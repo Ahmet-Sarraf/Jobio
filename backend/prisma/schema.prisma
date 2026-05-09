@@ -102,6 +102,8 @@ model Job {
 
   @@index([status])
   @@index([customerId])
+  @@index([freelancerId])
+  @@index([category])
 }
 
 model Review {
@@ -146,4 +148,5 @@ model Application {
   @@unique([jobId, freelancerId])
   @@index([status])
   @@index([jobId])
+  @@index([freelancerId])
 }

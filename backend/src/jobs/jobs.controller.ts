@@ -77,5 +77,10 @@ export class JobsController {
   ) {
     return this.jobsService.updateApplicationStatus(applicationId, status, req.user.id);
   }
+
+  @Delete(':id')
+  deleteJob(@Param('id') id: string, @Req() req: any) {
+    return this.jobsService.deleteJob(id, req.user.id);
+  }
 }
 

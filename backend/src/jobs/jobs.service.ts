@@ -438,4 +438,27 @@ export class JobsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async deleteJob(jobId: string, userId: string) {
+    const job = await this.prisma.job.findUnique({
+      where: { id: jobId },
+      include: { customer: true },
+    });
+
+    if (!job) {
+      throw new NotFoundException('İlan bulunamadı.');
+    }
+
+    if (job.customer.userId !== userId) {
+      throw new ForbiddenException('Sadece kendi açtığınız ilanı silebilirsiniz.');
+    }
+
+    if (job.status !== 'OPEN') {
+      throw new BadRequestException('Sadece AÇIK (OPEN) statüsündeki ilanlar silinebilir.');
+    }
+
+    return this.prisma.job.delete({
+      where: { id: jobId },
+    });
+  }
 }
