@@ -105,10 +105,10 @@ export default function Home() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full">
+    <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 lg:px-10 w-full">
       {/* Neo-Brutalist Search System */}
       <div className="mb-12">
-        <form onSubmit={handleSearch} className="relative flex items-stretch w-full max-w-4xl mx-auto shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all group">
+        <form onSubmit={handleSearch} className="relative flex items-stretch w-full shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all group">
           <div className="flex items-center justify-center bg-brutal-yellow border-y-[4px] border-l-[4px] border-black px-6">
             <Search className="h-8 w-8 text-black" strokeWidth={3} />
           </div>
@@ -128,7 +128,7 @@ export default function Home() {
         </form>
 
         {/* Category Pills */}
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3 md:gap-4 max-w-5xl mx-auto">
+        <div className="mt-8 flex flex-wrap items-center gap-3 md:gap-4">
           <button 
             onClick={() => setSelectedCategory('')}
             className={`px-5 py-2 font-black uppercase border-[3px] border-black transition-transform hover:-translate-y-1 shadow-brutal-sm ${selectedCategory === '' ? 'bg-black text-white' : 'bg-white text-black'}`}
@@ -156,7 +156,7 @@ export default function Home() {
           <p className="mt-4 text-lg font-bold text-gray-700">Kısa bir süre sonra tekrar kontrol edebilirsiniz.</p>
         </div>
       ) : (
-        <div className="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {jobs.map((job) => {
             const isAccepted = acceptedJobIds.has(job.id);
             return (
