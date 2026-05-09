@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { supabase } from '@/lib/supabase';
 import api from '@/lib/axios';
-import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload, Clock } from 'lucide-react';
+import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload, Clock, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 export default function ProfilePage() {
@@ -185,7 +185,7 @@ export default function ProfilePage() {
   const activeMenu = user.role === 'CUSTOMER' ? customerMenu : freelancerMenu;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-[1800px] px-4 py-12 sm:px-6 lg:px-12">
       {message && (
         <div className={`mb-8 p-4 flex items-start gap-3 border-[3px] border-black shadow-brutal transition-all duration-300 ${message.type === 'success' ? 'bg-green-300' : 'bg-brutal-pink'}`}>
           {message.type === 'success' ? <CheckCircle2 className="h-6 w-6 mt-0.5 shrink-0" strokeWidth={2.5} /> : <AlertCircle className="h-6 w-6 mt-0.5 shrink-0" strokeWidth={2.5} />}
@@ -196,9 +196,9 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-20 items-start">
         {/* Sol Kolon */}
-        <div className="md:col-span-1 space-y-8">
+        <div className="lg:col-span-1 space-y-8 lg:sticky lg:top-24">
           <div className="bg-white border-[3px] border-black shadow-brutal p-8 flex flex-col items-center text-center">
             <div className="relative group flex h-32 w-32 items-center justify-center rounded-full border-4 border-black bg-brutal-yellow overflow-hidden cursor-pointer shadow-brutal-sm transition-transform hover:-translate-y-1">
               {user.avatarUrl ? (
@@ -265,7 +265,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Sağ Kolon */}
-        <div className="md:col-span-2">
+        <div className="lg:col-span-4">
           {user.role === 'CUSTOMER' && activeTab === 'Profil Ayarları' && (
             <div className="bg-white border-[3px] border-black shadow-brutal">
               <div className="border-b-[3px] border-black p-6 bg-brutal-orange text-black">
@@ -639,6 +639,18 @@ function MyJobsTab() {
     setIsReviewModalOpen(true);
   };
 
+  const handleDeleteJob = async (jobId: string) => {
+    if (!window.confirm('Bu ilanı silmek istediğinize emin misiniz?')) return;
+    try {
+      await api.delete(`/jobs/${jobId}`);
+      setJobs(prev => prev.filter(j => j.id !== jobId));
+      setMessage({ text: 'İlan başarıyla silindi.', type: 'success' });
+    } catch (err: any) {
+      console.error('İlan silinirken hata oluştu', err);
+      setMessage({ text: err.response?.data?.message || 'İlan silinemedi.', type: 'error' });
+    }
+  };
+
   const handleCompleteJob = async () => {
     if (!selectedJob) return;
     try {
@@ -924,13 +936,22 @@ function MyJobsTab() {
                       </div>
                     </div>
 
-                    {appCount > 0 && (
-                      <button onClick={() => handleViewApplications(job)}
-                        className="shrink-0 inline-flex items-center gap-2 bg-brutal-pink text-black px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm">
-                        <Users className="h-5 w-5" strokeWidth={2.5} />
-                        BAŞVURANLARI GÖR
-                      </button>
-                    )}
+                    <div className="flex items-center gap-3 shrink-0 mt-4 sm:mt-0">
+                      {job.status === 'OPEN' && (
+                        <button onClick={() => handleDeleteJob(job.id)}
+                          className="shrink-0 inline-flex items-center gap-2 bg-red-400 text-black px-4 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm">
+                          <Trash2 className="h-5 w-5" strokeWidth={2.5} />
+                          SİL
+                        </button>
+                      )}
+                      {appCount > 0 && (
+                        <button onClick={() => handleViewApplications(job)}
+                          className="shrink-0 inline-flex items-center gap-2 bg-brutal-pink text-black px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm">
+                          <Users className="h-5 w-5" strokeWidth={2.5} />
+                          BAŞVURANLARI GÖR
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
