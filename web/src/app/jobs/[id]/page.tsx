@@ -168,15 +168,15 @@ export default function JobDetailsPage() {
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
         <Link href="/" className="group mb-8 inline-flex items-center text-base font-black text-black border-b-4 border-transparent hover:border-black transition-all uppercase tracking-wide">
           <ArrowLeft className="mr-2 h-6 w-6 transition-transform group-hover:-translate-x-2" strokeWidth={3} />
           İlan Listesine Dön
         </Link>
 
         <div className="flex flex-col lg:flex-row gap-10 items-start">
-          {/* SOL KOLON: İş Detayları (%70) */}
-          <div className="w-full lg:w-[70%] space-y-8">
+          {/* SOL KOLON: İş Detayları (%75) */}
+          <div className="w-full lg:w-[75%] space-y-8">
             {/* KABUL EDİLDİ BANNER */}
             {applicationStatus === 'ACCEPTED' && (
               <div className="bg-green-400 border-[4px] border-black shadow-brutal p-5 flex items-center gap-4 -rotate-1 hover:rotate-0 transition-transform">
@@ -273,8 +273,8 @@ export default function JobDetailsPage() {
             </div>
           </div>
 
-          {/* SAĞ KOLON: Aksiyon ve Müşteri Kartı (%30) */}
-          <div className="w-full lg:w-[30%] lg:sticky lg:top-12 space-y-8">
+          {/* SAĞ KOLON: Aksiyon ve Müşteri Kartı (%25) */}
+          <div className="w-full lg:w-[25%] lg:sticky lg:top-12 space-y-8">
             <div className="bg-[#fdfbf7] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-[4px] border-black">
               
               {/* Budget */}
