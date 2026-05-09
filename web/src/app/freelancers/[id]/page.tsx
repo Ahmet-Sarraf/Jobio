@@ -57,11 +57,11 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
   return (
     <div className="min-h-screen bg-brutal-bg">
       
-      <main className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <main className="mx-auto max-w-[1800px] px-4 py-16 sm:px-6 lg:px-12">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-20 items-start">
           {/* Sol Kolon - Profil Kartı */}
-          <div className="md:col-span-1">
-            <div className="bg-white border-[4px] border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8 text-center sticky top-24">
+          <div className="lg:col-span-1 lg:sticky lg:top-24">
+            <div className="bg-white border-[4px] border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8 text-center">
               <div className="relative mx-auto h-40 w-40 rounded-full border-[4px] border-black bg-brutal-yellow overflow-hidden mb-6 flex items-center justify-center shadow-brutal -rotate-3 hover:rotate-0 transition-transform">
                 {freelancer.avatarUrl ? (
                   <img src={freelancer.avatarUrl} alt={freelancer.name} className="h-full w-full object-cover" />
@@ -108,7 +108,7 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
           </div>
 
           {/* Sağ Kolon - Detaylar */}
-          <div className="md:col-span-2 space-y-12">
+          <div className="lg:col-span-4 space-y-12">
             
             {/* Hakkında */}
             <div className="bg-brutal-yellow border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-8">
