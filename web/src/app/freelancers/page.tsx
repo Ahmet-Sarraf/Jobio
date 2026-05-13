@@ -12,7 +12,7 @@ export default function FreelancersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [skillFilter, setSkillFilter] = useState('');
   const [debouncedSkill, setDebouncedSkill] = useState('');
-  
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -63,8 +63,13 @@ export default function FreelancersPage() {
         {/* Header Section */}
         <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tight text-black drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] mb-4">
-              Yetenekleri Keşfet
+            <h1 className="text-5xl md:text-8xl font-black uppercase leading-tight mb-8">
+              <span className="bg-brutal-yellow px-4 py-2 border-[4px] border-black shadow-brutal-lg inline-block -rotate-2 mr-4 mb-4">
+                Yetenekleri
+              </span>
+              <span className="bg-brutal-pink text-white px-4 py-2 border-[4px] border-black shadow-brutal-lg inline-block rotate-2 mb-4">
+                Keşfet
+              </span>
             </h1>
             <p className="text-xl font-bold max-w-2xl bg-white border-2 border-black inline-block px-4 py-2 shadow-brutal-sm -rotate-1">
               Projeniz için en iyi bağımsız çalışanları bulun.
@@ -115,8 +120,8 @@ export default function FreelancersPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {freelancers.map((freelancer, idx) => (
-              <div 
-                key={freelancer.id} 
+              <div
+                key={freelancer.id}
                 className={`border-[4px] border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col h-full ${cardColors[idx % cardColors.length]}`}
               >
                 <div className="flex flex-col items-center mb-4">
@@ -159,7 +164,7 @@ export default function FreelancersPage() {
                   </div>
                 )}
 
-                <Link 
+                <Link
                   href={`/freelancers/${freelancer.id}`}
                   className="mt-auto block w-full text-center bg-black text-white font-black uppercase py-3 border-[3px] border-black hover:bg-white hover:text-black transition-colors"
                 >
@@ -180,7 +185,7 @@ export default function FreelancersPage() {
             >
               <ChevronLeft className="w-6 h-6" strokeWidth={3} />
             </button>
-            
+
             <div className="font-black text-xl bg-white border-[3px] border-black px-6 py-2 shadow-brutal">
               {page} / {totalPages}
             </div>
