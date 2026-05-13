@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import api from '@/lib/axios';
 import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload, Clock, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function ProfilePage() {
   const { user, updateUserProfile } = useAuthStore();
@@ -162,6 +163,8 @@ export default function ProfilePage() {
       setSaving(false);
     }
   };
+
+  const router = useRouter();
 
   if (!user) {
     return null;
@@ -558,8 +561,8 @@ export default function ProfilePage() {
     </div>
   );
 }
-
 function MyJobsTab() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<any[]>([]);
@@ -572,6 +575,7 @@ function MyJobsTab() {
   const [reviewScore, setReviewScore] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const cardColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200', 'bg-purple-200'];
 
@@ -675,6 +679,15 @@ function MyJobsTab() {
     }
   };
 
+  const handleStartChat = async (freelancerId: string) => {
+    try {
+      const res = await api.post('/chat/start', { freelancerId });
+      router.push(`/messages?id=${res.data.id}`);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Sohbet başlatılamadı.');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'OPEN': return <span className="inline-block bg-green-300 text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm -rotate-1">AÇIK İLAN</span>;
@@ -758,6 +771,12 @@ function MyJobsTab() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-3">
+                    <button 
+                      onClick={() => handleStartChat(app.freelancerId)}
+                      className="inline-flex items-center justify-center gap-2 bg-white text-black px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm flex-1">
+                      <MessageSquare className="h-5 w-5" strokeWidth={2.5} />
+                      MESAJ GÖNDER
+                    </button>
                     {app.freelancer?.resumeUrl ? (
                       <a href={app.freelancer.resumeUrl} target="_blank" rel="noreferrer"
                         className="inline-flex items-center justify-center gap-2 bg-brutal-blue text-white px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all text-sm flex-1">
@@ -872,6 +891,13 @@ function MyJobsTab() {
   /* ── İLANLARIM LİSTESİ ── */
   return (
     <div className="bg-white border-[3px] border-black shadow-brutal flex flex-col min-h-[500px]">
+      {/* Toast Mesaj */}
+      {message && (
+        <div className={`mx-6 mt-4 p-4 border-[3px] border-black font-black uppercase text-sm flex items-center justify-between shadow-brutal-sm ${message.type === 'success' ? 'bg-green-300 text-black' : 'bg-brutal-pink text-black'}`}>
+          <span>{message.text}</span>
+          <button onClick={() => setMessage(null)} className="ml-4 text-black hover:opacity-60">✕</button>
+        </div>
+      )}
       <div className="border-b-[3px] border-black p-6 bg-brutal-blue text-white flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-black uppercase tracking-wide">İlanlarım</h1>
@@ -1033,7 +1059,8 @@ function MyJobsTab() {
 function FreelancerJobsTab() {
   const [activeInner, setActiveInner] = useState<'applications' | 'active'>('applications');
   const [applications, setApplications] = useState<any[]>([]);
-  const [activeJobs, setActiveJobs] = useState<{ assignedJobs: any[]; acceptedApps: any[] }>({ assignedJobs: [], acceptedApps: [] });
+  // Sadece my-jobs'dan gelen atanmış işler — acceptedApps kaldırıldı (aynı işi çift gösteriyordu)
+  const [activeJobs, setActiveJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const cardColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200', 'bg-purple-200'];
@@ -1045,12 +1072,12 @@ function FreelancerJobsTab() {
           api.get('/jobs/my-applications'),
           api.get('/jobs/my-jobs'),
         ]);
-        // PENDING ve REJECTED olanlar "Başvurularım" sekmesinde
-        setApplications(appsRes.data.filter((a: any) => a.status !== 'ACCEPTED'));
-        // ACCEPTED başvurular + atanmış işler "Aktif İşlerim" sekmesinde
+        // Başvurularım: sadece PENDING ve REJECTED — ACCEPTED ve COMPLETED olarak işaretlenenler burda görünmemeli
+        setApplications(appsRes.data.filter((a: any) => a.status !== 'ACCEPTED' && a.status !== 'COMPLETED'));
+        // Aktif işler: sadece my-jobs'dan freelancerId atanmış, tamamlanmamış işler
+        // my-applications/ACCEPTED ile çakışmayı önlemek için tek kaynak kullanılıyor
         const assignedJobs = jobsRes.data.filter((j: any) => j.freelancerId && j.status !== 'COMPLETED');
-        const acceptedApps = appsRes.data.filter((a: any) => a.status === 'ACCEPTED');
-        setActiveJobs({ assignedJobs, acceptedApps });
+        setActiveJobs(assignedJobs);
       } catch (err) {
         console.error('Veriler alinamadi', err);
       } finally {
@@ -1098,7 +1125,7 @@ function FreelancerJobsTab() {
           className={`flex-1 py-4 font-black uppercase text-sm tracking-wide transition-all ${activeInner === 'active' ? 'bg-brutal-blue text-white' : 'bg-white hover:bg-gray-50 text-black'}`}
         >
           Aktif İşlerim
-          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{activeJobs.assignedJobs.length + activeJobs.acceptedApps.length}</span>
+          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{activeJobs.length}</span>
         </button>
       </div>
 
@@ -1152,7 +1179,7 @@ function FreelancerJobsTab() {
 
       {activeInner === 'active' && (
         <div className="p-6 flex-1 bg-brutal-bg">
-          {activeJobs.assignedJobs.length === 0 && activeJobs.acceptedApps.length === 0 ? (
+          {activeJobs.length === 0 ? (
             <div className="text-center py-16">
               <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 rotate-3">
                 <Briefcase className="h-10 w-10 text-black" strokeWidth={2.5} />
@@ -1162,35 +1189,7 @@ function FreelancerJobsTab() {
             </div>
           ) : (
             <div className="space-y-5">
-              {/* KABUL EDİLEN BAŞVURULAR */}
-              {activeJobs.acceptedApps.map((app: any, i: number) => (
-                <div key={app.id} className={`bg-green-100 ${i % 2 === 0 ? 'rotate-[0.3deg]' : '-rotate-[0.3deg]'} border-[3px] border-black shadow-brutal p-5 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all`}>
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-black text-black uppercase mb-1">{app.job?.title || 'İsimsiz İş'}</h3>
-                      <p className="text-xs font-bold text-black/70 mb-3">
-                        {app.job?.customer?.user?.name || 'Bilinmeyen İşveren'} &bull;{' '}
-                        {new Date(app.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </p>
-                      <div className="flex flex-wrap gap-2 items-center">
-                        <span className="inline-block border-2 border-black font-bold px-3 py-1 shadow-brutal-sm text-xs uppercase bg-green-400 text-black -rotate-1">
-                          ✓ BAŞVURUNUZ KABUL EDİLDİ
-                        </span>
-                        {app.job?.budget && <span className="bg-white text-black border-2 border-black px-2 py-0.5 text-xs font-black">{app.job.budget} ₺</span>}
-                        {app.job?.category && <span className="bg-black text-white px-2 py-0.5 text-xs font-black">{app.job.category}</span>}
-                      </div>
-                    </div>
-                    {app.job?.id && (
-                      <a href={`/jobs/${app.job.id}`} className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-xs">
-                        <Briefcase className="h-4 w-4" strokeWidth={2.5} /> İLANA GİT
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-
-              {/* ATANMIŞ İŞLER */}
-              {activeJobs.assignedJobs.map((job: any, i: number) => (
+              {activeJobs.map((job: any, i: number) => (
                 <div key={job.id} className={`${cardColors[i % cardColors.length]} ${i % 2 === 0 ? 'rotate-[0.3deg]' : '-rotate-[0.3deg]'} border-[3px] border-black shadow-brutal p-5 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all`}>
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                     <div className="flex-1">
@@ -1201,7 +1200,7 @@ function FreelancerJobsTab() {
                       </p>
                       <div className="flex flex-wrap gap-2 items-center">
                         <span className={`inline-block border-2 border-black font-bold px-3 py-1 shadow-brutal-sm text-xs uppercase ${job.status === 'IN_PROGRESS' ? 'bg-brutal-blue text-white rotate-1' : job.status === 'COMPLETED' ? 'bg-green-300 -rotate-1' : 'bg-gray-300 rotate-2'}`}>
-                          {job.status === 'IN_PROGRESS' ? 'Devam Ediyor' : job.status === 'COMPLETED' ? 'Tamamlandı' : job.status}
+                          {job.status === 'IN_PROGRESS' ? '✓ KABUL EDİLDİ — DEVAM EDİYOR' : job.status === 'COMPLETED' ? 'Tamamlandı' : job.status}
                         </span>
                         {job.budget && <span className="bg-white text-black border-2 border-black px-2 py-0.5 text-xs font-black">{job.budget} ₺</span>}
                         {job.category && <span className="bg-black text-white px-2 py-0.5 text-xs font-black">{job.category}</span>}
@@ -1296,29 +1295,63 @@ function FreelancerReviewsTab() {
         ) : (
           <div className="space-y-6">
             {completedJobs.map((job: any) => (
-              <div key={job.id} className="bg-white border-[4px] border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all group">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
-                  <h3 className="text-2xl font-black uppercase line-clamp-2 flex-1">{job.title || 'İsimsiz İş'}</h3>
-                  
-                  {job.review && (
-                    <div className="flex items-center gap-1 shrink-0 bg-gray-100 border-2 border-black px-3 py-1">
-                      <span className="font-black mr-2">{job.review.score}.0</span>
-                      {[1, 2, 3, 4, 5].map(star => (
-                        <Star key={star} className={`h-5 w-5 ${star <= job.review.score ? 'fill-brutal-yellow text-black' : 'fill-transparent text-gray-400'}`} strokeWidth={2.5} />
-                      ))}
+              <div key={job.id} className="bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all group overflow-hidden">
+                
+                {/* İş Detayları Başlık Alanı */}
+                <div className="bg-[#f4f0eb] border-b-[3px] border-black p-5">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
+                    <h3 className="text-xl font-black uppercase text-black flex-1">{job.title || 'İsimsiz İş'}</h3>
+                    {job.review && (
+                      <div className="flex items-center gap-1 shrink-0 bg-brutal-yellow border-2 border-black px-3 py-1">
+                        <span className="font-black mr-1">{job.review.score}.0</span>
+                        {[1, 2, 3, 4, 5].map((star: number) => (
+                          <Star key={star} className={`h-4 w-4 ${star <= job.review.score ? 'fill-black text-black' : 'fill-transparent text-gray-400'}`} strokeWidth={2.5} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="inline-block bg-gray-300 text-black border-2 border-black font-bold px-3 py-1 text-xs uppercase -rotate-1">TAMAMLANDI</span>
+                    {job.customer?.user?.name && (
+                      <span className="text-black bg-white border-2 border-black px-2 py-0.5 text-xs font-bold">
+                        İşveren: {job.customer.user.name}
+                      </span>
+                    )}
+                    {job.budget && (
+                      <span className="bg-brutal-yellow text-black border-2 border-black px-2 py-0.5 text-xs font-black">
+                        {job.budget.toLocaleString('tr-TR')} ₺
+                      </span>
+                    )}
+                    {job.category && (
+                      <span className="bg-black text-white px-2 py-0.5 text-xs font-black">{job.category}</span>
+                    )}
+                    <span className="text-black bg-gray-100 border-2 border-black px-2 py-0.5 text-xs font-bold">
+                      {new Date(job.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
+                    <a
+                      href={`/jobs/${job.id}`}
+                      className="inline-flex items-center gap-1 bg-white text-black border-2 border-black px-3 py-0.5 text-xs font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                    >
+                      İLANA GİT →
+                    </a>
+                  </div>
+                </div>
+
+                {/* Değerlendirme Alanı */}
+                <div className="p-5">
+                  {job.review ? (
+                    <div>
+                      <p className="text-xs font-black uppercase text-black mb-2 border-b-2 border-black pb-1 inline-block">Müşteri Değerlendirmesi</p>
+                      <p className="font-bold text-base text-gray-800 italic border-l-4 border-brutal-yellow pl-4 whitespace-pre-wrap">
+                        &ldquo;{job.review.comment}&rdquo;
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 font-bold text-gray-500 uppercase bg-gray-100 p-4 border-2 border-black">
+                      <Clock className="h-5 w-5" /> İşveren henüz değerlendirme yapmadı.
                     </div>
                   )}
                 </div>
-                
-                {job.review ? (
-                  <p className="font-bold text-lg text-gray-800 italic border-l-4 border-brutal-yellow pl-4 whitespace-pre-wrap">
-                    "{job.review.comment}"
-                  </p>
-                ) : (
-                  <div className="flex items-center gap-2 font-bold text-gray-500 uppercase bg-gray-100 p-4 border-2 border-black">
-                    <Clock className="h-5 w-5" /> İşveren henüz değerlendirme yapmadı.
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -1329,6 +1362,7 @@ function FreelancerReviewsTab() {
 }
 
 function CustomerActiveJobsTab() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const cardColors = ['bg-green-100', 'bg-brutal-yellow', 'bg-blue-100', 'bg-orange-100', 'bg-purple-100'];
@@ -1337,8 +1371,8 @@ function CustomerActiveJobsTab() {
     const fetchJobs = async () => {
       try {
         const res = await api.get('/jobs/my-jobs');
-        // Kabul edilmiş başvurusu olan işleri göster
-        setJobs(res.data.filter((j: any) => j.applications && j.applications.length > 0));
+        // İlerleme halindeki veya freelancer atanmış işleri göster
+        setJobs(res.data.filter((j: any) => j.freelancerId !== null));
       } catch (err) {
         console.error('İlanlar alınamadı', err);
       } finally {
@@ -1347,6 +1381,15 @@ function CustomerActiveJobsTab() {
     };
     fetchJobs();
   }, []);
+
+  const handleStartChat = async (freelancerId: string) => {
+    try {
+      const res = await api.post('/chat/start', { freelancerId });
+      router.push(`/messages?id=${res.data.id}`);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Sohbet başlatılamadı.');
+    }
+  };
 
   if (loading) {
     return (
@@ -1383,8 +1426,7 @@ function CustomerActiveJobsTab() {
         ) : (
           <div className="space-y-6">
             {jobs.map((job: any, i: number) => {
-              const acceptedApp = job.applications[0];
-              const freelancer = acceptedApp?.freelancer;
+              const freelancer = job.freelancer;
               return (
                 <div key={job.id} className={`${cardColors[i % cardColors.length]} ${i % 2 === 0 ? 'rotate-[0.3deg]' : '-rotate-[0.3deg]'} border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all`}>
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -1419,9 +1461,17 @@ function CustomerActiveJobsTab() {
                       </div>
                     </div>
 
-                    <a href={`/jobs/${job.id}`} className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-sm">
-                      <Briefcase className="h-5 w-5" strokeWidth={2.5} /> İLANA GİT
-                    </a>
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <button 
+                        onClick={() => handleStartChat(freelancer.id)}
+                        className="inline-flex items-center justify-center gap-2 bg-brutal-pink text-black px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-sm">
+                        <MessageSquare className="h-5 w-5" strokeWidth={2.5} /> MESAJ GÖNDER
+                      </button>
+
+                      <a href={`/jobs/${job.id}`} className="shrink-0 inline-flex items-center gap-2 bg-white text-black px-5 py-3 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-sm">
+                        <Briefcase className="h-5 w-5" strokeWidth={2.5} /> İLANA GİT
+                      </a>
+                    </div>
                   </div>
                 </div>
               );
