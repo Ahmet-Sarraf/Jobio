@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LogOut, User as UserIcon, Briefcase, PlusCircle, Bell, X, CheckCheck } from 'lucide-react';
+import { LogOut, User as UserIcon, Briefcase, PlusCircle, Bell, X, CheckCheck, MessageSquare } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import api from '@/lib/axios';
 
@@ -20,6 +20,7 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -30,8 +31,12 @@ export default function Navbar() {
   useEffect(() => {
     if (isAuthenticated && mounted) {
       fetchNotifications();
+      fetchUnreadMessages();
       // Poll every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
+      const interval = setInterval(() => {
+        fetchNotifications();
+        fetchUnreadMessages();
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, mounted]);
@@ -51,6 +56,15 @@ export default function Navbar() {
       const res = await api.get('/notifications');
       setNotifications(res.data.slice(0, 10));
       setUnreadCount(res.data.filter((n: Notification) => !n.isRead).length);
+    } catch {
+      // Sessizce geç
+    }
+  };
+
+  const fetchUnreadMessages = async () => {
+    try {
+      const res = await api.get('/chat/unread-count');
+      setUnreadMessages(res.data.count);
     } catch {
       // Sessizce geç
     }
@@ -111,6 +125,20 @@ export default function Navbar() {
               >
                 <PlusCircle className="h-5 w-5" strokeWidth={2.5} />
                 <span>İlan Oluştur</span>
+              </Link>
+
+              {/* Mesajlar İkonu */}
+              <Link
+                href="/messages"
+                className="relative flex items-center justify-center h-10 w-10 rounded-md bg-white border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                aria-label="Mesajlar"
+              >
+                <MessageSquare className="h-5 w-5 text-black" strokeWidth={2.5} />
+                {unreadMessages > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-black min-w-[20px] h-5 flex items-center justify-center border-2 border-black px-1">
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
               </Link>
 
               {/* Bildirim Zili */}

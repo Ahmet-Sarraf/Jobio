@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react';
 import api from '@/lib/axios';
 import { User, Star, Briefcase, FileText, Link as LinkIcon, MessageSquare, Download } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
 
 export default function FreelancerProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -11,6 +12,7 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
   const [reviewsData, setReviewsData] = useState<{ averageScore: number, totalReviews: number, reviews: any[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuthStore();
+  const router = useRouter();
 
   // Post-it colors
   const postitColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200'];
@@ -32,6 +34,28 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
     };
     fetchProfile();
   }, [id]);
+
+  const handleStartChat = async () => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+    
+    // Sadece CUSTOMER rolü başlatabilir kontrolü (AuthStore da role string olabilir)
+    const isCustomer = user?.role === 'CUSTOMER' || (user as any)?.user_metadata?.user_role === 'CUSTOMER';
+    if (!isCustomer) {
+      alert('Sadece İşverenler mesajlaşma başlatabilir.');
+      return;
+    }
+
+    try {
+      await api.post('/chat/start', { freelancerId: freelancer.id });
+      router.push('/messages');
+    } catch (err) {
+      console.error('Mesaj başlatılamadı:', err);
+      alert('Sohbet başlatılırken bir hata oluştu.');
+    }
+  };
 
   if (loading) {
     return (
@@ -90,9 +114,11 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
               )}
 
               <div className="space-y-4">
-                <button className="w-full flex items-center justify-center gap-2 bg-brutal-blue text-white border-[3px] border-black py-4 font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all">
-                  <MessageSquare className="h-5 w-5" strokeWidth={2.5} /> Mesaj Gönder
-                </button>
+                {(!isAuthenticated || user?.role === 'CUSTOMER' || (user as any)?.user_metadata?.user_role === 'CUSTOMER') && (
+                  <button onClick={handleStartChat} className="w-full flex items-center justify-center gap-2 bg-brutal-blue text-white border-[3px] border-black py-4 font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all">
+                    <MessageSquare className="h-5 w-5" strokeWidth={2.5} /> Mesaj Gönder
+                  </button>
+                )}
                 {freelancer.portfolioUrl && (
                   <a href={freelancer.portfolioUrl} target="_blank" rel="noreferrer" className="w-full flex items-center justify-center gap-2 bg-white text-black border-[3px] border-black py-4 font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all">
                     <LinkIcon className="h-5 w-5" strokeWidth={2.5} /> Portfolyo

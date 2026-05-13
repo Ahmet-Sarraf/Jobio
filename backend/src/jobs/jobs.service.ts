@@ -93,8 +93,11 @@ export class JobsService {
   }
 
   async findMyJobs(userId: string) {
-    const customer = await this.prisma.customerProfile.findUnique({ where: { userId }});
-    const freelancer = await this.prisma.freelancerProfile.findUnique({ where: { userId }});
+    // Optimizasyon #2: Paralel sorgu — birbirinden bağımsız iki profil sorgusu Promise.all ile
+    const [customer, freelancer] = await Promise.all([
+      this.prisma.customerProfile.findUnique({ where: { userId } }),
+      this.prisma.freelancerProfile.findUnique({ where: { userId } }),
+    ]);
 
     const OR = [];
     if (customer) OR.push({ customerId: customer.id });
@@ -112,17 +115,6 @@ export class JobsService {
         requiredSkills: true,
         review: true,
         _count: { select: { applications: true } },
-        // Kabul edilen başvuruyu da getir (müşteri "Aktif İşlerim" için)
-        applications: {
-          where: { status: 'ACCEPTED' },
-          include: {
-            freelancer: {
-              include: {
-                user: { select: { id: true, name: true, avatarUrl: true, email: true } },
-              },
-            },
-          },
-        },
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -313,6 +305,7 @@ export class JobsService {
   }
 
   async updateApplicationStatus(applicationId: string, status: 'ACCEPTED' | 'REJECTED', userId: string) {
+    // Optimizasyon #4: alreadyAccepted kontrolü ilk sorguya dahil edildi (ekstra round-trip yok)
     const application = await this.prisma.application.findUnique({
       where: { id: applicationId },
       include: {
@@ -322,6 +315,12 @@ export class JobsService {
               include: {
                 user: { select: { name: true } },
               },
+            },
+            // İlk sorguda kabul edilmiş başvuruyu da çek — ikinci sorguya gerek kalmaz
+            applications: {
+              where: { status: 'ACCEPTED' },
+              take: 1,
+              select: { id: true },
             },
           },
         },
@@ -338,45 +337,21 @@ export class JobsService {
       throw new ForbiddenException('Bu başvuruyu değerlendirme yetkiniz yok.');
     }
 
-    // Aynı iş için zaten kabul edilmiş biri var mı?
-    if (status === 'ACCEPTED') {
-      const alreadyAccepted = await this.prisma.application.findFirst({
-        where: { jobId: application.jobId, status: 'ACCEPTED' },
-      });
-      if (alreadyAccepted) {
-        throw new BadRequestException('Bu ilan için zaten bir aday kabul edilmiştir.');
-      }
-    }
-
-    // Statüyü güncelle
-    const updated = await this.prisma.application.update({
-      where: { id: applicationId },
-      data: { status },
-    });
-
-    // Eğer KABUL EDİLDİYSE: ilanı da IN_PROGRESS yap ve freelancer'ı ata
-    if (status === 'ACCEPTED') {
-      await this.prisma.job.update({
-        where: { id: application.jobId },
-        data: {
-          status: 'IN_PROGRESS',
-          freelancerId: application.freelancerId,
-        },
-      });
+    // Aynı iş için zaten kabul edilmiş biri var mı? (Ekstra sorgu yok — include'dan geldi)
+    if (status === 'ACCEPTED' && application.job.applications.length > 0) {
+      throw new BadRequestException('Bu ilan için zaten bir aday kabul edilmiştir.');
     }
 
     const employerName = application.job.customer.user.name || 'Bir işveren';
     const jobTitle = application.job.title;
     const statusText = status === 'ACCEPTED' ? 'Kabul Edildi' : 'Reddedildi';
-    const message = `${employerName} isimli kullanıcının açtığı ${jobTitle} ilanına başvurunuz ${statusText}. İyi çalışmalar.`;
+    const acceptMessage = `${employerName} isimli kullanıcının açtığı ${jobTitle} ilanına başvurunuz ${statusText}. İyi çalışmalar.`;
 
-    // Kabul edilen freelancer'a bildirim
-    await this.prisma.notification.create({
-      data: { userId: application.freelancer.user.id, message },
-    });
-
-    // Eğer KABUL EDİLDİYSE: diğer PENDING başvuruları otomatik reddet ve bildir
     if (status === 'ACCEPTED') {
+      // Optimizasyon #4: Kabul durumunda tüm işlemler paralel başlatılıyor
+      const rejectMsg = `${employerName} isimli kullanıcının açtığı ${jobTitle} ilanına başvurunuz Reddedildi. İyi çalışmalar.`;
+
+      // Diğer PENDING başvuruları önce çek (notify için userId lazım)
       const otherApps = await this.prisma.application.findMany({
         where: {
           jobId: application.jobId,
@@ -384,35 +359,59 @@ export class JobsService {
           status: 'PENDING',
         },
         include: {
-          freelancer: {
-            include: { user: { select: { id: true } } },
-          },
+          freelancer: { include: { user: { select: { id: true } } } },
         },
       });
 
-      if (otherApps.length > 0) {
-        // Hepsini REJECTED yap
-        await this.prisma.application.updateMany({
-          where: {
-            jobId: application.jobId,
-            id: { not: applicationId },
-            status: 'PENDING',
-          },
-          data: { status: 'REJECTED' },
-        });
+      // Tüm paralel işlemler: uygulama güncelle + iş güncelle + bildirim + diğerlerini reddet + red bildirimleri
+      const [updated] = await Promise.all([
+        this.prisma.application.update({
+          where: { id: applicationId },
+          data: { status },
+        }),
+        this.prisma.job.update({
+          where: { id: application.jobId },
+          data: { status: 'IN_PROGRESS', freelancerId: application.freelancerId },
+        }),
+        this.prisma.notification.create({
+          data: { userId: application.freelancer.user.id, message: acceptMessage },
+        }),
+        // Sadece başvuru varsa reddet ve bildir
+        ...(otherApps.length > 0
+          ? [
+              this.prisma.application.updateMany({
+                where: {
+                  jobId: application.jobId,
+                  id: { not: applicationId },
+                  status: 'PENDING',
+                },
+                data: { status: 'REJECTED' },
+              }),
+              this.prisma.notification.createMany({
+                data: otherApps.map((app) => ({
+                  userId: app.freelancer.user.id,
+                  message: rejectMsg,
+                })),
+              }),
+            ]
+          : []),
+      ]);
 
-        // Her birine red bildirimi gönder
-        const rejectMsg = `${employerName} isimli kullanıcının açtığı ${jobTitle} ilanına başvurunuz Reddedildi. İyi çalışmalar.`;
-        await this.prisma.notification.createMany({
-          data: otherApps.map((app) => ({
-            userId: app.freelancer.user.id,
-            message: rejectMsg,
-          })),
-        });
-      }
+      return updated;
+    } else {
+      // RED durumu: sadece 2 paralel işlem
+      const [updated] = await Promise.all([
+        this.prisma.application.update({
+          where: { id: applicationId },
+          data: { status },
+        }),
+        this.prisma.notification.create({
+          data: { userId: application.freelancer.user.id, message: acceptMessage },
+        }),
+      ]);
+
+      return updated;
     }
-
-    return updated;
   }
 
   async getMyApplications(userId: string) {

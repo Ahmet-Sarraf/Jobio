@@ -32,6 +32,7 @@ model User {
   freelancerProfile FreelancerProfile?
   customerProfile   CustomerProfile?
   notifications     Notification[]
+  messages          Message[]
 }
 
 model Notification {
@@ -58,6 +59,7 @@ model FreelancerProfile {
   assignedJobs Job[]    @relation("AssignedFreelancer")
   reviews      Review[] @relation("ReceivedReviews")
   applications Application[] @relation("FreelancerApplications")
+  conversations Conversation[] @relation("FreelancerConversations")
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -71,6 +73,7 @@ model CustomerProfile {
   
   jobs      Job[]    @relation("CustomerJobs")
   reviews   Review[] @relation("GivenReviews")
+  conversations Conversation[] @relation("CustomerConversations")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -104,6 +107,7 @@ model Job {
   @@index([customerId])
   @@index([freelancerId])
   @@index([category])
+  @@index([createdAt])
 }
 
 model Review {
@@ -149,4 +153,36 @@ model Application {
   @@index([status])
   @@index([jobId])
   @@index([freelancerId])
+}
+
+model Conversation {
+  id           String   @id @default(uuid())
+  customerId   String
+  freelancerId String
+  isBlocked    Boolean  @default(false)
+  blockedById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  customer     CustomerProfile   @relation("CustomerConversations", fields: [customerId], references: [id], onDelete: Cascade)
+  freelancer   FreelancerProfile @relation("FreelancerConversations", fields: [freelancerId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@unique([customerId, freelancerId])
+  @@index([customerId])
+  @@index([freelancerId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  senderId       String
+  content        String
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  @@index([conversationId])
 }

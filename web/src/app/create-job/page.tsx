@@ -66,7 +66,8 @@ export default function CreateJobPage() {
 
       await api.post('/jobs', payload);
       
-      router.push('/profile');
+      alert('İlanınız başarıyla yayınlandı!');
+      router.push('/jobs');
     } catch (err: any) {
       setError(err.response?.data?.message || 'İlan oluşturulurken bir hata meydana geldi.');
     } finally {
@@ -100,7 +101,7 @@ export default function CreateJobPage() {
         <div className="flex flex-col xl:flex-row gap-8 items-start">
 
           {/* FORM ALANI */}
-          <div className="w-full xl:w-[68%] bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="w-full xl:w-[68%] bg-white border-[4px] border-black shadow-[8px_8px_0px_0px_#ffc900]">
             
             {/* Form içi iki sütunlu grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 divide-y-[4px] lg:divide-y-0 lg:divide-x-[4px] divide-black">
@@ -128,7 +129,7 @@ export default function CreateJobPage() {
                       placeholder="Örn: Kıdemli Frontend Geliştirici"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all"
+                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_#ffc900] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all"
                     />
                   </div>
 
@@ -140,7 +141,7 @@ export default function CreateJobPage() {
                       id="category"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all cursor-pointer appearance-none bg-white"
+                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_#ffc900] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all cursor-pointer appearance-none bg-white"
                     >
                       <option value="">Seçiniz</option>
                       <option value="Web Geliştirme">Web Geliştirme</option>
@@ -177,8 +178,8 @@ export default function CreateJobPage() {
                           onClick={() => setExperienceLevel(level.id)}
                           className={`cursor-pointer p-4 transition-all duration-200 bg-white text-center ${
                             experienceLevel === level.id 
-                              ? 'border-[4px] border-black bg-brutal-pink text-black scale-105 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] z-10 -rotate-1' 
-                              : 'border-[3px] border-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
+                              ? 'border-[4px] border-black bg-brutal-pink text-black scale-105 shadow-[6px_6px_0px_0px_#ffc900] z-10 -rotate-1' 
+                              : 'border-[3px] border-black text-black shadow-[4px_4px_0px_0px_#ffc900] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none'
                           }`}
                         >
                           <div className="font-black text-sm uppercase">{level.id}</div>
@@ -207,7 +208,7 @@ export default function CreateJobPage() {
                       ))}
                     </div>
 
-                    <div className="border-[3px] border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus-within:translate-x-[2px] focus-within:translate-y-[2px] focus-within:shadow-none transition-all">
+                    <div className="border-[3px] border-black bg-white p-2 shadow-[4px_4px_0px_0px_#ffc900] focus-within:translate-x-[2px] focus-within:translate-y-[2px] focus-within:shadow-none transition-all">
                       <div className="flex flex-wrap gap-2 mb-2 px-1 mt-1">
                         {skills.map((skill, index) => (
                           <span 
@@ -262,7 +263,7 @@ export default function CreateJobPage() {
                       placeholder="Projenin detayları, freelancer'dan beklentileriniz ve teknik gereksinimler..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
-                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all resize-y"
+                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_#ffc900] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all resize-y"
                     />
                   </div>
 
@@ -275,7 +276,7 @@ export default function CreateJobPage() {
                       id="duration"
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
-                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all cursor-pointer appearance-none bg-white"
+                      className="block w-full border-[3px] border-black p-4 text-black font-bold shadow-[4px_4px_0px_0px_#ffc900] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all cursor-pointer appearance-none bg-white"
                     >
                       <option value="">Seçiniz</option>
                       <option value="1 aydan az">1 aydan az</option>
@@ -301,7 +302,7 @@ export default function CreateJobPage() {
                         placeholder="Örn: 15000"
                         value={budget}
                         onChange={(e) => setBudget(e.target.value)}
-                        className="block w-full border-[3px] border-black p-4 pl-10 text-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all"
+                        className="block w-full border-[3px] border-black p-4 pl-10 text-black font-bold shadow-[4px_4px_0px_0px_#ffc900] focus:translate-x-[2px] focus:translate-y-[2px] focus:shadow-none focus:bg-amber-50 outline-none transition-all"
                       />
                     </div>
                   </div>
@@ -312,7 +313,7 @@ export default function CreateJobPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex items-center justify-center gap-3 bg-green-400 px-8 py-5 text-lg font-black text-black uppercase tracking-widest border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none disabled:opacity-70 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] disabled:cursor-not-allowed transition-all w-full"
+                    className="flex items-center justify-center gap-3 bg-green-400 px-8 py-5 text-lg font-black text-black uppercase tracking-widest border-[4px] border-black shadow-[8px_8px_0px_0px_#ffc900] hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none disabled:opacity-70 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[8px_8px_0px_0px_#ffc900] disabled:cursor-not-allowed transition-all w-full"
                   >
                     {loading ? (
                       <>

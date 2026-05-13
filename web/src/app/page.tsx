@@ -75,7 +75,8 @@ export default function Home() {
     fetchJobs();
   };
 
-  if (loading && jobs.length === 0) {
+  // İlk yükleme haricinde tam sayfa loading göstermiyoruz
+  if (loading && jobs.length === 0 && searchQuery === '' && selectedCategory === '') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="h-16 w-16 border-4 border-black border-t-brutal-yellow animate-spin shadow-brutal-sm bg-white"></div>
@@ -139,7 +140,7 @@ export default function Home() {
             <button 
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-5 py-2 font-black uppercase border-[3px] border-black transition-transform hover:-translate-y-1 shadow-brutal-sm ${selectedCategory === cat ? 'bg-brutal-pink text-black' : 'bg-white text-black'}`}
+              className={`px-5 py-2 font-black uppercase border-[3px] border-black transition-transform hover:-translate-y-1 shadow-brutal-sm ${selectedCategory === cat ? 'bg-brutal-blue text-white' : 'bg-white text-black'}`}
             >
               {cat}
             </button>
@@ -147,7 +148,12 @@ export default function Home() {
         </div>
       </div>
 
-      {jobs.length === 0 ? (
+      {loading && jobs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+          <div className="h-12 w-12 border-4 border-black border-t-brutal-yellow animate-spin shadow-brutal-sm bg-white"></div>
+          <p className="text-black font-black uppercase tracking-widest animate-pulse">İlanlar Getiriliyor...</p>
+        </div>
+      ) : jobs.length === 0 ? (
         <div className="mt-8 bg-white border-[4px] border-black p-16 text-center shadow-brutal rotate-1">
           <div className="mx-auto flex h-24 w-24 items-center justify-center bg-brutal-yellow border-4 border-black shadow-brutal -rotate-3 mb-6">
             <Briefcase className="h-12 w-12 text-black" strokeWidth={2.5} />
@@ -156,7 +162,7 @@ export default function Home() {
           <p className="mt-4 text-lg font-bold text-gray-700">Kısa bir süre sonra tekrar kontrol edebilirsiniz.</p>
         </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className={`grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
           {jobs.map((job) => {
             const isAccepted = acceptedJobIds.has(job.id);
             return (
