@@ -168,7 +168,7 @@ export default function JobDetailsPage() {
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] py-12">
-      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-[1700px] px-4 sm:px-6 lg:px-10">
         <Link href="/" className="group mb-8 inline-flex items-center text-base font-black text-black border-b-4 border-transparent hover:border-black transition-all uppercase tracking-wide">
           <ArrowLeft className="mr-2 h-6 w-6 transition-transform group-hover:-translate-x-2" strokeWidth={3} />
           İlan Listesine Dön
@@ -190,7 +190,7 @@ export default function JobDetailsPage() {
               </div>
             )}
 
-            <div className="bg-[#fdfbf7] p-8 sm:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-[4px] border-black">
+            <div className="bg-[#f5f2e9] p-8 sm:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-[4px] border-black hover:scale-[1.01] transition-all duration-300">
               {/* Header / Title */}
               <div>
                 <div className="flex items-center gap-4 mb-6">
@@ -242,7 +242,7 @@ export default function JobDetailsPage() {
               {/* Description */}
               <div>
                 <h2 className="text-2xl font-black text-black mb-6 uppercase inline-block border-b-4 border-black pb-1">İş Tanımı ve Kapsam</h2>
-                <div className="prose prose-blue max-w-none text-black whitespace-pre-wrap leading-loose text-lg font-bold bg-white p-6 border-2 border-black shadow-brutal-sm -rotate-1">
+                <div className="prose prose-blue max-w-none text-black whitespace-pre-wrap leading-loose text-lg font-bold bg-[#fcfaf2] p-6 border-[3px] border-black shadow-[6px_6px_0px_0px_#ffc900] -rotate-1">
                   {job.description}
                 </div>
               </div>
@@ -257,14 +257,17 @@ export default function JobDetailsPage() {
                 </h2>
                 {job.requiredSkills && job.requiredSkills.length > 0 ? (
                   <div className="flex flex-wrap gap-3 mt-4">
-                    {job.requiredSkills.map((skill) => (
-                       <span 
-                         key={skill.id} 
-                         className="inline-block bg-black text-white px-4 py-2 text-base font-black uppercase border-2 border-black shadow-[2px_2px_0px_0px_rgba(150,150,150,1)] hover:scale-105 transition-transform"
-                       >
-                         {skill.name}
-                       </span>
-                    ))}
+                        {job.requiredSkills.map((skill, index) => {
+                          const colors = ['bg-brutal-yellow', 'bg-brutal-blue text-white', 'bg-brutal-pink', 'bg-green-300', 'bg-orange-400', 'bg-purple-400 text-white'];
+                          return (
+                            <span 
+                              key={skill.id} 
+                              className={`inline-block ${colors[index % colors.length]} px-4 py-2 text-base font-black uppercase border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:scale-110 hover:-rotate-1 transition-all cursor-default`}
+                            >
+                              {skill.name}
+                            </span>
+                          );
+                        })}
                   </div>
                 ) : (
                   <p className="text-black text-base font-bold bg-gray-200 border-2 border-black p-4 inline-block shadow-brutal-sm">Bu ilan için özel bir yetenek belirtilmemiş.</p>
@@ -275,7 +278,7 @@ export default function JobDetailsPage() {
 
           {/* SAĞ KOLON: Aksiyon ve Müşteri Kartı (%25) */}
           <div className="w-full lg:w-[25%] lg:sticky lg:top-12 space-y-8">
-            <div className="bg-[#fdfbf7] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-[4px] border-black">
+            <div className="bg-[#f5f2e9] p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] border-[4px] border-black hover:scale-[1.01] transition-all duration-300">
               
               {/* Budget */}
               <div className="text-center mb-8 border-[4px] border-black bg-green-300 p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rotate-1 hover:rotate-0 transition-transform">
@@ -292,16 +295,26 @@ export default function JobDetailsPage() {
 
               {/* Action Button */}
               {!isCustomer ? (
-                (applicationStatus === 'ACCEPTED' || applicationStatus === 'REJECTED') ? (
-                  <div className={`w-full flex flex-col items-center justify-center gap-2 px-6 py-5 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center cursor-not-allowed ${applicationStatus === 'ACCEPTED' ? 'bg-green-200' : 'bg-gray-200'}`}>
+                (applicationStatus === 'ACCEPTED' || applicationStatus === 'REJECTED' || applicationStatus === 'COMPLETED') ? (
+                  <div className={`w-full flex flex-col items-center justify-center gap-2 px-6 py-5 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center cursor-not-allowed ${
+                    applicationStatus === 'ACCEPTED' ? 'bg-green-200' :
+                    applicationStatus === 'COMPLETED' ? 'bg-gray-100' :
+                    'bg-gray-200'
+                  }`}>
                     <span className="text-base font-black text-black uppercase tracking-wide">
                       Bu ilana başvurunuz sonuçlanmıştır
                     </span>
-                    <span className={`inline-block px-4 py-1.5 border-[3px] border-black font-black text-sm uppercase shadow-brutal-sm ${applicationStatus === 'ACCEPTED' ? 'bg-green-400 text-black' : 'bg-red-300 text-black'}`}>
-                      {applicationStatus === 'ACCEPTED' ? '✓ Kabul Edildi' : '✕ Reddedildi'}
+                    <span className={`inline-block px-4 py-1.5 border-[3px] border-black font-black text-sm uppercase shadow-brutal-sm ${
+                      applicationStatus === 'ACCEPTED' ? 'bg-green-400 text-black' :
+                      applicationStatus === 'COMPLETED' ? 'bg-gray-300 text-black' :
+                      'bg-red-300 text-black'
+                    }`}>
+                      {applicationStatus === 'ACCEPTED' ? '✓ Kabul Edildi' :
+                       applicationStatus === 'COMPLETED' ? '✓ İş Tamamlandı' :
+                       '✕ Reddedildi'}
                     </span>
                   </div>
-                ) : hasApplied ? (
+                ) : hasApplied && job.status === 'OPEN' ? (
                    <button 
                     onClick={handleCancelApplication}
                     disabled={isSubmitting}
@@ -310,6 +323,13 @@ export default function JobDetailsPage() {
                      <Trash2 className="h-6 w-6" strokeWidth={3} />
                      {isSubmitting ? 'İPTAL EDİLİYOR...' : 'BAŞVURUYU İPTAL ET'}
                    </button>
+                ) : hasApplied && job.status !== 'OPEN' ? (
+                  <div className="w-full flex flex-col items-center justify-center gap-2 px-6 py-5 border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-center cursor-not-allowed bg-gray-200">
+                    <span className="text-base font-black text-black uppercase tracking-wide">İlan artık başvuruya kapalı</span>
+                    <span className="inline-block px-4 py-1.5 border-[3px] border-black font-black text-sm uppercase shadow-brutal-sm bg-gray-400 text-black">
+                      {job.status === 'IN_PROGRESS' ? 'Devam Ediyor' : job.status === 'COMPLETED' ? 'Tamamlandı' : 'Kapalı'}
+                    </span>
+                  </div>
                 ) : (
                    <button 
                     onClick={handleOpenModal}
@@ -321,7 +341,7 @@ export default function JobDetailsPage() {
                    </button>
                 )
               ) : (
-                <div className="w-full bg-gray-200 border-[4px] border-black px-6 py-5 text-center text-base font-black text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -rotate-1">
+                <div className="w-full bg-brutal-red text-white border-[4px] border-black px-6 py-5 text-center text-base font-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -rotate-1">
                   İŞVERENLER BAŞVURU YAPAMAZ.
                 </div>
               )}
@@ -335,7 +355,7 @@ export default function JobDetailsPage() {
                   İşveren Bilgileri
                 </p>
                 
-                <div className="flex items-center gap-5 mb-6 bg-white border-2 border-black p-4 shadow-brutal-sm">
+                <div className="flex items-center gap-5 mb-6 bg-[#fcfaf2] border-2 border-black p-4 shadow-brutal-sm">
                   {job.customer?.user?.avatarUrl ? (
                     <img src={job.customer.user.avatarUrl} alt="Avatar" className="h-16 w-16 border-4 border-black object-cover" />
                   ) : (
@@ -354,7 +374,7 @@ export default function JobDetailsPage() {
                   </div>
                 </div>
                 
-                <div className="bg-gray-100 p-5 border-[3px] border-black space-y-3 shadow-brutal-sm -rotate-1">
+                <div className="bg-blue-50 p-5 border-[3px] border-black space-y-3 shadow-[4px_4px_0px_0px_#3b82f6] -rotate-1">
                   <div className="flex justify-between text-sm font-black uppercase">
                     <span className="text-black">Kayıt Tarihi</span>
                     <span className="text-black bg-white border-2 border-black px-2 py-0.5">NİSAN 2026</span>
