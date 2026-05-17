@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import BrutalToastContainer from "@/components/BrutalToastContainer";
 
 const outfit = Outfit({
   weight: ["300", "400", "500", "700", "900"],
@@ -23,6 +24,7 @@ export default function RootLayout({
       <body className={`${outfit.className} min-h-full flex flex-col bg-brutal-bg text-black`}>
         <Navbar />
         <main className="flex-1 flex flex-col">{children}</main>
+        <BrutalToastContainer />
       </body>
     </html>
   );
