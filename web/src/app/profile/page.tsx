@@ -4,9 +4,18 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { supabase } from '@/lib/supabase';
 import api from '@/lib/axios';
-import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload, Clock, Trash2 } from 'lucide-react';
+import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload, Clock, Trash2, Tag } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useToastStore } from '@/store/useToastStore';
+
+const POPULAR_SKILLS = [
+  'React', 'Node.js', 'TypeScript', 'Next.js', 'Python', 'Java', 'C#',
+  'Vue.js', 'Angular', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin',
+  'Flutter', 'React Native', 'SQL', 'MongoDB', 'PostgreSQL', 'Docker',
+  'Kubernetes', 'AWS', 'Figma', 'Adobe XD', 'SEO', 'Dijital Pazarlama',
+  'İçerik Üretimi', 'Copywriting', 'SEO Uyumlu İçerik',
+];
 
 export default function ProfilePage() {
   const { user, updateUserProfile } = useAuthStore();
@@ -23,6 +32,9 @@ export default function ProfilePage() {
     hourlyRate: 0,
     portfolioUrl: '',
   });
+  // Freelancer yetenekleri — AI öneri sistemi altyapısı için
+  const [skills, setSkills] = useState<string[]>([]);
+  const [skillInput, setSkillInput] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -45,6 +57,10 @@ export default function ProfilePage() {
           hourlyRate: res.data.hourlyRate || 0,
           portfolioUrl: res.data.portfolioUrl || '',
         });
+        // Mevcut yetenekleri yükle
+        if (res.data.skills) {
+          setSkills(res.data.skills.map((s: any) => typeof s === 'string' ? s : s.name));
+        }
         
         if (res.data.role === 'CUSTOMER' && activeTab === 'Temel Bilgiler') {
           setActiveTab('Profil Ayarları');
@@ -152,6 +168,8 @@ export default function ProfilePage() {
         payload.bio = formData.bio;
         payload.hourlyRate = Number(formData.hourlyRate);
         payload.portfolioUrl = formData.portfolioUrl;
+        // Yapay zeka öneri sistemi için yetenekleri kaydet
+        payload.skills = skills;
       }
 
       await api.patch('/users/me', payload);
@@ -174,6 +192,7 @@ export default function ProfilePage() {
     { id: 'Profil Ayarları', icon: Settings },
     { id: 'İlanlarım', icon: Briefcase },
     { id: 'Aktif İşlerim', icon: Users },
+    { id: 'Tamamlanmış İşlerim', icon: CheckCircle2 },
     { id: 'Mesajlar', icon: MessageSquare },
   ];
 
@@ -205,7 +224,7 @@ export default function ProfilePage() {
           <div className="bg-white border-[3px] border-black shadow-brutal p-8 flex flex-col items-center text-center">
             <div className="relative group flex h-32 w-32 items-center justify-center rounded-full border-4 border-black bg-brutal-yellow overflow-hidden cursor-pointer shadow-brutal-sm transition-transform hover:-translate-y-1">
               {user.avatarUrl ? (
-                <Image src={user.avatarUrl} alt="Profil Fotoğrafı" fill className="object-cover" />
+                <Image src={user.avatarUrl} alt="Profil Fotoğrafı" fill sizes="150px" className="object-cover" />
               ) : (
                 user.role === 'CUSTOMER' ? <Building className="h-16 w-16 text-black" strokeWidth={2} /> : <User className="h-16 w-16 text-black" strokeWidth={2} />
               )}
@@ -355,6 +374,8 @@ export default function ProfilePage() {
 
           {user.role === 'CUSTOMER' && activeTab === 'Aktif İşlerim' && <CustomerActiveJobsTab />}
 
+          {user.role === 'CUSTOMER' && activeTab === 'Tamamlanmış İşlerim' && <CustomerCompletedJobsTab />}
+
           {user.role === 'FREELANCER' && activeTab === 'Temel Bilgiler' && (
             <div className="bg-white border-[3px] border-black shadow-brutal">
               <div className="border-b-[3px] border-black p-6 bg-brutal-yellow text-black">
@@ -436,6 +457,71 @@ export default function ProfilePage() {
                           <span className="font-bold text-black">USD</span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Yetenek Yönetimi — create-job tarzı — AI öneri sistemi için */}
+                    <div>
+                      <label className="block text-sm font-bold text-black mb-3 flex items-center gap-2">
+                        <Tag className="h-4 w-4" strokeWidth={2.5} />
+                        Yeteneklerim
+                        <span className="text-xs bg-brutal-blue text-white px-2 py-0.5 font-black uppercase">AI Önerisi İçin</span>
+                      </label>
+
+                      {/* Popüler Yetenekler — yatay kaydırılabilir */}
+                      <div className="flex overflow-x-auto gap-2 pb-3 mb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {POPULAR_SKILLS
+                          .filter((s) => !skills.map((sk) => sk.toLowerCase()).includes(s.toLowerCase()))
+                          .map((skill) => (
+                            <button
+                              key={skill}
+                              type="button"
+                              onClick={() => setSkills([...skills, skill.toLowerCase()])}
+                              className="shrink-0 bg-white border-[2px] border-black px-3 py-1.5 text-xs font-black text-black hover:bg-brutal-yellow hover:-translate-y-1 hover:shadow-brutal-sm transition-all"
+                            >
+                              + {skill}
+                            </button>
+                          ))}
+                      </div>
+
+                      {/* Seçilen Yetenekler + Custom Giriş */}
+                      <div className="border-[3px] border-black bg-white p-2 shadow-[4px_4px_0px_0px_#ffc900] focus-within:translate-x-[2px] focus-within:translate-y-[2px] focus-within:shadow-none transition-all">
+                        <div className="flex flex-wrap gap-2 mb-2 px-1 mt-1">
+                          {skills.map((skill) => (
+                            <span
+                              key={skill}
+                              className="inline-flex items-center gap-2 border-[2px] border-black bg-brutal-pink px-3 py-1 text-sm font-black text-black shadow-brutal-sm"
+                            >
+                              {skill}
+                              <button
+                                type="button"
+                                onClick={() => setSkills(skills.filter((s) => s !== skill))}
+                                className="hover:bg-black hover:text-white rounded-full transition-colors"
+                              >
+                                <X className="h-4 w-4" strokeWidth={3} />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <input
+                          id="skillInput"
+                          type="text"
+                          value={skillInput}
+                          onChange={(e) => setSkillInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ',') {
+                              e.preventDefault();
+                              const val = skillInput.trim().toLowerCase().replace(/,/g, '');
+                              if (val && !skills.map((s) => s.toLowerCase()).includes(val)) {
+                                setSkills([...skills, val]);
+                              }
+                              setSkillInput('');
+                            }
+                          }}
+                          placeholder="Listede olmayan bir yetenek ekle (Enter veya ,)"
+                          className="block w-full border-0 py-2 px-3 text-black font-bold bg-transparent focus:ring-0 outline-none placeholder:text-black/40 text-sm"
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-black/60 font-bold ml-1">Yukarıdan seç veya kendin yaz. İş ilanlarıyla otomatik eşleştirilecek.</p>
                     </div>
                   </div>
                 </div>
@@ -543,7 +629,7 @@ export default function ProfilePage() {
           
           {user.role === 'FREELANCER' && activeTab === 'Değerlendirmeler' && <FreelancerReviewsTab />}
 
-          {((user.role === 'CUSTOMER' && activeTab !== 'Profil Ayarları' && activeTab !== 'İlanlarım' && activeTab !== 'Aktif İşlerim') || 
+          {((user.role === 'CUSTOMER' && activeTab !== 'Profil Ayarları' && activeTab !== 'İlanlarım' && activeTab !== 'Aktif İşlerim' && activeTab !== 'Tamamlanmış İşlerim') || 
             (user.role === 'FREELANCER' && activeTab !== 'Temel Bilgiler' && activeTab !== 'Özgeçmiş & Portfolyo' && activeTab !== 'İşlerim & Başvurular' && activeTab !== 'Değerlendirmeler')) && (
             <div className="flex flex-col items-center justify-center min-h-[500px] bg-brutal-blue border-[4px] border-black shadow-brutal p-12 text-center -rotate-1">
               <div className="h-24 w-24 bg-brutal-yellow border-[3px] border-black shadow-brutal flex items-center justify-center mb-8 rotate-3">
@@ -562,14 +648,13 @@ export default function ProfilePage() {
   );
 }
 function MyJobsTab() {
+  const { showToast } = useToastStore();
   const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [applications, setApplications] = useState<any[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
-  const [activeInner, setActiveInner] = useState<'active' | 'completed'>('active');
-
   // Review Modal state
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewScore, setReviewScore] = useState(5);
@@ -580,7 +665,6 @@ function MyJobsTab() {
   const cardColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200', 'bg-purple-200'];
 
   const activeJobsList = jobs.filter(j => j.status !== 'COMPLETED');
-  const completedJobsList = jobs.filter(j => j.status === 'COMPLETED');
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -670,10 +754,10 @@ function MyJobsTab() {
       setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, review: { score: reviewScore, comment: reviewComment } } : j));
 
       setIsReviewModalOpen(false);
-      alert('Değerlendirmeniz başarıyla kaydedildi.');
+      showToast('Değerlendirmeniz başarıyla kaydedildi.', 'success');
     } catch (err) {
       console.error('Değerlendirme yapılırken hata oluştu', err);
-      alert('Değerlendirme sırasında bir hata oluştu.');
+      showToast('Değerlendirme sırasında bir hata oluştu.', 'error');
     } finally {
       setSubmittingReview(false);
     }
@@ -684,7 +768,7 @@ function MyJobsTab() {
       const res = await api.post('/chat/start', { freelancerId });
       router.push(`/messages?id=${res.data.id}`);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Sohbet başlatılamadı.');
+      showToast(err.response?.data?.message || 'Sohbet başlatılamadı.', 'error');
     }
   };
 
@@ -762,6 +846,28 @@ function MyJobsTab() {
                       {new Date(app.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </span>
                   </div>
+
+                  {app.aiScore !== null && app.aiScore !== undefined && (
+                    <div className="mb-5 bg-white border-[3px] border-black shadow-brutal-sm p-4 relative">
+                      <div className="absolute -top-3 -right-3 bg-brutal-blue text-white border-2 border-black px-2 py-1 text-xs font-black rotate-3">
+                        AI DEĞERLENDİRMESİ
+                      </div>
+                      <div className="flex items-start gap-4">
+                        <div className={`flex flex-col items-center justify-center h-16 w-16 shrink-0 border-2 border-black font-black text-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] ${
+                          app.aiScore >= 80 ? 'bg-green-400' :
+                          app.aiScore >= 50 ? 'bg-brutal-yellow' : 'bg-brutal-pink'
+                        }`}>
+                          {app.aiScore}%
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-black uppercase text-black mb-1 opacity-70">Neden Uygun / Uygun Değil?</p>
+                          <p className="text-sm font-bold text-black leading-relaxed">
+                            {app.aiReasoning || 'Değerlendirme yapılamadı.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mb-5">
                     <p className="text-xs font-black uppercase text-black mb-2 border-b-2 border-black pb-1 inline-block">Ön Yazı</p>
@@ -904,30 +1010,12 @@ function MyJobsTab() {
           <p className="mt-1 text-sm font-bold">Oluşturduğunuz tüm iş ilanları.</p>
         </div>
         <div className="bg-brutal-yellow text-black border-2 border-black px-4 py-2 font-black shadow-brutal-sm rotate-2">
-          TOPLAM: {jobs.length}
+          TOPLAM: {activeJobsList.length}
         </div>
       </div>
 
-      <div className="flex border-b-[3px] border-black">
-        <button
-          onClick={() => setActiveInner('active')}
-          className={`flex-1 py-4 font-black uppercase text-sm tracking-wide border-r-[3px] border-black transition-all ${activeInner === 'active' ? 'bg-brutal-blue text-white' : 'bg-white hover:bg-gray-50 text-black'}`}
-        >
-          Aktif İlanlar
-          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{activeJobsList.length}</span>
-        </button>
-        <button
-          onClick={() => setActiveInner('completed')}
-          className={`flex-1 py-4 font-black uppercase text-sm tracking-wide transition-all ${activeInner === 'completed' ? 'bg-green-400 text-black' : 'bg-white hover:bg-gray-50 text-black'}`}
-        >
-          Tamamlanmış İşler
-          <span className="ml-2 bg-black text-white px-2 py-0.5 text-xs font-black">{completedJobsList.length}</span>
-        </button>
-      </div>
-
-      {activeInner === 'active' && (
-        <div className="p-8 flex-1 bg-brutal-bg">
-          {activeJobsList.length === 0 ? (
+      <div className="p-8 flex-1 bg-brutal-bg">
+        {activeJobsList.length === 0 ? (
             <div className="text-center py-16">
               <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
                 <Briefcase className="h-10 w-10 text-black" strokeWidth={2.5} />
@@ -985,11 +1073,11 @@ function MyJobsTab() {
           </div>
         )}
         </div>
-      )}
 
-      {activeInner === 'completed' && (
+
+      {false && (
         <div className="p-8 flex-1 bg-brutal-bg">
-          {completedJobsList.length === 0 ? (
+          {[].length === 0 ? (
             <div className="text-center py-16">
               <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
                 <CheckCircle2 className="h-10 w-10 text-black" strokeWidth={2.5} />
@@ -999,7 +1087,7 @@ function MyJobsTab() {
             </div>
           ) : (
             <div className="space-y-6">
-              {completedJobsList.map((job) => {
+              {[].map((job: any) => {
                 return (
                   <div key={job.id} className="relative bg-white border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all group">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
@@ -1057,6 +1145,7 @@ function MyJobsTab() {
 }
 
 function FreelancerJobsTab() {
+  const { showToast } = useToastStore();
   const [activeInner, setActiveInner] = useState<'applications' | 'active'>('applications');
   const [applications, setApplications] = useState<any[]>([]);
   // Sadece my-jobs'dan gelen atanmış işler — acceptedApps kaldırıldı (aynı işi çift gösteriyordu)
@@ -1092,7 +1181,7 @@ function FreelancerJobsTab() {
       await api.patch(`/jobs/${jobId}/complete`);
       window.location.reload();
     } catch (err) {
-      alert("İş tamamlanırken bir hata oluştu.");
+      showToast("İş tamamlanırken bir hata oluştu.", "error");
     }
   };
 
@@ -1362,6 +1451,7 @@ function FreelancerReviewsTab() {
 }
 
 function CustomerActiveJobsTab() {
+  const { showToast } = useToastStore();
   const router = useRouter();
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1371,8 +1461,8 @@ function CustomerActiveJobsTab() {
     const fetchJobs = async () => {
       try {
         const res = await api.get('/jobs/my-jobs');
-        // İlerleme halindeki veya freelancer atanmış işleri göster
-        setJobs(res.data.filter((j: any) => j.freelancerId !== null));
+        // Sadece aktif olan, freelancer atanmış ama tamamlanmamış işleri göster
+        setJobs(res.data.filter((j: any) => j.freelancerId !== null && j.status !== 'COMPLETED'));
       } catch (err) {
         console.error('İlanlar alınamadı', err);
       } finally {
@@ -1387,7 +1477,7 @@ function CustomerActiveJobsTab() {
       const res = await api.post('/chat/start', { freelancerId });
       router.push(`/messages?id=${res.data.id}`);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Sohbet başlatılamadı.');
+      showToast(err.response?.data?.message || 'Sohbet başlatılamadı.', 'error');
     }
   };
 
@@ -1479,6 +1569,191 @@ function CustomerActiveJobsTab() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function CustomerCompletedJobsTab() {
+  const { showToast } = useToastStore();
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Review Modal state
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewScore, setReviewScore] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await api.get('/jobs/my-jobs');
+        setJobs(res.data.filter((j: any) => j.status === 'COMPLETED'));
+      } catch (err) {
+        console.error('İlanlar alınamadı', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  const handleOpenReviewModal = (job: any) => {
+    setSelectedJob(job);
+    setReviewScore(5);
+    setReviewComment('');
+    setIsReviewModalOpen(true);
+  };
+
+  const handleCompleteJob = async () => {
+    if (!selectedJob) return;
+    try {
+      setSubmittingReview(true);
+      await api.post('/reviews', {
+        jobId: selectedJob.id,
+        score: reviewScore,
+        comment: reviewComment,
+      });
+
+      setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, review: { score: reviewScore, comment: reviewComment } } : j));
+
+      setIsReviewModalOpen(false);
+      showToast('Değerlendirmeniz başarıyla kaydedildi.', 'success');
+    } catch (err) {
+      console.error('Değerlendirme yapılırken hata oluştu', err);
+      showToast('Değerlendirme sırasında bir hata oluştu.', 'error');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[500px] bg-white border-[3px] border-black shadow-brutal">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-black border-t-brutal-yellow"></div>
+        <p className="mt-4 text-base font-black uppercase">Yükleniyor...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white border-[3px] border-black shadow-brutal flex flex-col min-h-[500px]">
+      <div className="border-b-[3px] border-black p-6 bg-green-400 text-black flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-black uppercase tracking-wide">Tamamlanmış İşlerim</h1>
+          <p className="mt-1 text-sm font-bold">Biten işleriniz ve değerlendirmeleriniz.</p>
+        </div>
+        <div className="bg-black text-brutal-yellow border-2 border-black px-4 py-2 font-black shadow-brutal-sm rotate-2">
+          TOPLAM: {jobs.length}
+        </div>
+      </div>
+
+      <div className="p-8 flex-1 bg-brutal-bg">
+        {jobs.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="bg-white border-4 border-black shadow-brutal h-24 w-24 flex items-center justify-center mx-auto mb-6 -rotate-3">
+              <CheckCircle2 className="h-10 w-10 text-black" strokeWidth={2.5} />
+            </div>
+            <h3 className="text-2xl font-black text-black uppercase mb-2">TAMAMLANMIŞ İŞ YOK</h3>
+            <p className="text-base font-bold text-gray-700 max-w-sm mx-auto">Henüz tamamlanan bir işiniz bulunmuyor.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {jobs.map((job) => {
+              return (
+                <div key={job.id} className="relative bg-white border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all group">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-black text-black uppercase mb-3">{job.title}</h3>
+                      <div className="flex flex-wrap items-center gap-3 mb-4">
+                        <span className="inline-block bg-gray-300 text-black border-2 border-black font-bold px-3 py-1 shadow-brutal-sm -rotate-2 text-sm">TAMAMLANDI</span>
+                        {job.freelancer?.user && (
+                          <span className="text-black bg-blue-100 px-2 py-1 border-2 border-black font-bold text-sm">
+                            Freelancer: {job.freelancer.user.name}
+                          </span>
+                        )}
+                        <span className="text-black bg-gray-200 px-2 py-1 border-2 border-black font-bold text-sm">
+                          {new Date(job.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </span>
+                      </div>
+                      
+                      {job.review ? (
+                        <div className="bg-[#f4f0eb] border-2 border-black p-4 shadow-brutal-sm relative -rotate-1 w-full max-w-2xl">
+                          <div className="absolute -top-3 left-8 w-12 h-5 bg-white/40 border-2 border-black -rotate-2 backdrop-blur-sm"></div>
+                          <div className="flex items-center gap-1 mb-2">
+                            {[1, 2, 3, 4, 5].map(star => (
+                              <Star key={star} className={`h-5 w-5 ${star <= job.review.score ? 'fill-brutal-yellow text-black' : 'fill-transparent text-gray-400'}`} strokeWidth={2.5} />
+                            ))}
+                            <span className="ml-3 text-xs font-black uppercase text-gray-500">Değerlendirmeniz</span>
+                          </div>
+                          <p className="text-sm font-bold text-black italic">"{job.review.comment}"</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col sm:flex-row items-center gap-4 bg-gray-100 border-2 border-black p-4 mt-2 max-w-2xl">
+                          <div className="flex-1 text-sm font-bold text-gray-600 uppercase flex items-center gap-2">
+                            <AlertCircle className="h-5 w-5 text-brutal-pink" strokeWidth={2.5} />
+                            Bu iş için henüz değerlendirme yapmadınız.
+                          </div>
+                          <button 
+                            onClick={() => handleOpenReviewModal(job)}
+                            className="shrink-0 bg-brutal-yellow text-black px-4 py-2 border-[2px] border-black font-black uppercase shadow-brutal-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all text-sm flex items-center gap-2"
+                          >
+                            <Star className="h-4 w-4" strokeWidth={2.5} /> DEĞERLENDİR
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* REVIEW MODAL */}
+      {isReviewModalOpen && selectedJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[#f4f0eb] border-[4px] border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-lg w-full p-8 relative">
+            <button onClick={() => setIsReviewModalOpen(false)} className="absolute top-4 right-4 bg-white border-2 border-black p-1 hover:bg-brutal-pink hover:rotate-6 transition-all shadow-brutal-sm">
+              <X className="h-6 w-6 text-black" strokeWidth={2.5} />
+            </button>
+            <h2 className="text-3xl font-black uppercase text-black mb-2 border-b-4 border-black pb-4">İşi Değerlendir</h2>
+            <p className="font-bold text-gray-800 mb-6 text-sm">İş tamamlandı. Lütfen freelancer'ı değerlendirin.</p>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-black text-black mb-3 uppercase">Puanınız</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button key={star} type="button" onClick={() => setReviewScore(star)} className="hover:scale-110 transition-transform focus:outline-none">
+                    <Star className={`h-10 w-10 ${star <= reviewScore ? 'fill-brutal-yellow text-black' : 'fill-white text-black drop-shadow-sm'} `} strokeWidth={2.5} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <label className="block text-sm font-black text-black mb-3 uppercase">Yorumunuz</label>
+              <textarea 
+                rows={4} 
+                className="w-full bg-white border-[3px] border-black p-4 font-bold text-black shadow-brutal-sm focus:outline-none focus:ring-4 focus:ring-brutal-yellow/50 transition-all" 
+                placeholder="Freelancer hakkında düşüncelerinizi yazın..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+              />
+            </div>
+
+            <button 
+              onClick={handleCompleteJob}
+              disabled={submittingReview || !reviewComment.trim()}
+              className="w-full bg-brutal-blue text-white py-4 border-[3px] border-black font-black uppercase shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-brutal text-lg tracking-wider"
+            >
+              {submittingReview ? 'KAYDEDİLİYOR...' : 'ONAYLA & TAMAMLA'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
