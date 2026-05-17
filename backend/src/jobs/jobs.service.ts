@@ -3,10 +3,14 @@ import { CreateJobDto } from './dto/create-job.dto';
 import { AssignJobDto } from './dto/assign-job.dto';
 import { ApplyJobDto } from './dto/apply-job.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiService,
+  ) {}
 
   async create(createJobDto: CreateJobDto, userId: string) {
     const customer = await this.prisma.customerProfile.findUnique({
@@ -141,7 +145,10 @@ export class JobsService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { aiScore: 'desc' },
+        { createdAt: 'desc' }
+      ],
     });
   }
 
@@ -253,13 +260,20 @@ export class JobsService {
       throw new BadRequestException('Bu işe zaten başvurdunuz.');
     }
 
-    return this.prisma.application.create({
+    const application = await this.prisma.application.create({
       data: {
         jobId,
         freelancerId: freelancer.id,
         coverLetter: applyJobDto.coverLetter,
       }
     });
+
+    // Asenkron olarak AI değerlendirmesini başlat (kullanıcıyı bekletmemek için await yok)
+    this.aiService.evaluateApplicationSuitability(application.id).catch(err => {
+      console.error('AI değerlendirme hatası:', err);
+    });
+
+    return application;
   }
 
   async cancelApplication(jobId: string, userId: string) {
