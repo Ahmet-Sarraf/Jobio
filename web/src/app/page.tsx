@@ -168,7 +168,7 @@ export default function Home() {
             return (
             <div
               key={job.id}
-              className={`group flex flex-col justify-between border-[4px] border-black p-6 shadow-brutal hover:-translate-y-2 hover:-translate-x-2 transition-transform relative ${isAccepted ? 'bg-green-50' : 'bg-white'}`}
+              className={`group flex flex-col justify-between border-[4px] border-black p-6 shadow-brutal hover:-translate-y-2 hover:-translate-x-2 transition-transform relative hover-wobble ${isAccepted ? 'bg-green-50' : 'bg-white'}`}
             >
               {/* Statü Rozeti */}
               <div className="absolute -top-4 -right-4 rotate-6 group-hover:rotate-12 transition-transform">
@@ -211,7 +211,7 @@ export default function Home() {
                   {new Date(job.createdAt).toLocaleDateString('tr-TR')}
                 </span>
                 <Link href={`/jobs/${job.id}`}>
-                  <button className={`px-5 py-2.5 text-sm font-black text-black uppercase border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all ${isAccepted ? 'bg-green-400' : 'bg-brutal-pink'}`}>
+                  <button className={`px-5 py-2.5 text-sm font-black text-black uppercase border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all hover-wobble ${isAccepted ? 'bg-green-400' : 'bg-brutal-pink'}`}>
                     Detayları Gör
                   </button>
                 </Link>
@@ -271,12 +271,12 @@ function LandingPage() {
         style={{ animationDelay: '1200ms', animationFillMode: 'backwards' }}
       >
         <Link href="/login" className="w-full sm:w-auto">
-          <button className="w-full sm:w-auto px-12 py-5 bg-white text-black font-black text-xl border-[4px] border-black shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-widest">
+          <button className="w-full sm:w-auto px-12 py-5 bg-white text-black font-black text-xl border-[4px] border-black shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-widest hover-wobble">
             Giriş Yap
           </button>
         </Link>
         <Link href="/register" className="w-full sm:w-auto">
-          <button className="w-full sm:w-auto px-12 py-5 bg-brutal-blue text-white font-black text-xl border-[4px] border-black shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-widest">
+          <button className="w-full sm:w-auto px-12 py-5 bg-brutal-blue text-white font-black text-xl border-[4px] border-black shadow-brutal hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none transition-all uppercase tracking-widest hover-wobble">
             Hemen Kaydol
           </button>
         </Link>
