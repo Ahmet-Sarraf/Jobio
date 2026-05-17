@@ -5,6 +5,7 @@ import api from '@/lib/axios';
 import { User, Star, Briefcase, FileText, Link as LinkIcon, MessageSquare, Download } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
+import { useToastStore } from '@/store/useToastStore';
 
 export default function FreelancerProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -13,6 +14,7 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
+  const { showToast } = useToastStore();
 
   // Post-it colors
   const postitColors = ['bg-brutal-yellow', 'bg-brutal-pink', 'bg-green-200', 'bg-blue-200', 'bg-orange-200'];
@@ -44,7 +46,7 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
     // Sadece CUSTOMER rolü başlatabilir kontrolü (AuthStore da role string olabilir)
     const isCustomer = user?.role === 'CUSTOMER' || (user as any)?.user_metadata?.user_role === 'CUSTOMER';
     if (!isCustomer) {
-      alert('Sadece İşverenler mesajlaşma başlatabilir.');
+      showToast('Sadece İşverenler mesajlaşma başlatabilir.', 'info');
       return;
     }
 
@@ -53,7 +55,7 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
       router.push('/messages');
     } catch (err) {
       console.error('Mesaj başlatılamadı:', err);
-      alert('Sohbet başlatılırken bir hata oluştu.');
+      showToast('Sohbet başlatılırken bir hata oluştu.', 'error');
     }
   };
 
