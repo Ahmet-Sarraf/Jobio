@@ -146,6 +146,9 @@ model Application {
   coverLetter  String
   status       String            @default("PENDING")
   
+  aiScore      Int?              // 0-100 match score
+  aiReasoning  String?           // Explanation why they are suitable
+  
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   

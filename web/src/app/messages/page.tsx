@@ -7,10 +7,12 @@ import api from '@/lib/axios';
 import { getSocketAsync, disconnectSocket } from '@/lib/socket';
 import ChatSidebar from './ChatSidebar';
 import ChatArea from './ChatArea';
+import { useToastStore } from '@/store/useToastStore';
 
 export default function MessagesPage() {
   const { user, token, isAuthenticated, _hasHydrated } = useAuthStore();
   const router = useRouter();
+  const { showToast } = useToastStore();
 
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeChat, setActiveChat] = useState<any>(null);
@@ -86,7 +88,7 @@ export default function MessagesPage() {
 
     const onSocketError = (err: any) => {
       console.error('Socket hatası:', err);
-      alert(`Soket hatası: ${err.message || JSON.stringify(err)}`);
+      showToast(`Soket hatası: ${err.message || 'Bağlantı sorunu'}`, 'error');
     };
 
     setupSocket().then(() => {
@@ -147,7 +149,7 @@ export default function MessagesPage() {
     if (!newMessage.trim() || !activeChat || !token) return;
 
     if (activeChat.isBlocked) {
-      alert('Bu sohbet engellendi.');
+      showToast('Bu sohbet engellendi.', 'info');
       return;
     }
 
@@ -167,7 +169,7 @@ export default function MessagesPage() {
       await api.post(`/chat/conversations/${activeChat.id}/block`);
       setActiveChat({ ...activeChat, isBlocked: true });
       setConversations(prev => prev.map(c => c.id === activeChat.id ? { ...c, isBlocked: true } : c));
-      alert('Sohbet engellendi.');
+      showToast('Sohbet engellendi.', 'info');
     } catch (error) {
       console.error('Sohbet engellenemedi', error);
     }
@@ -179,10 +181,10 @@ export default function MessagesPage() {
       await api.delete(`/chat/conversations/${activeChat.id}`);
       setConversations(prev => prev.filter(c => c.id !== activeChat.id));
       setActiveChat(null);
-      alert('Sohbet başarıyla silindi.');
+      showToast('Sohbet başarıyla silindi.', 'success');
     } catch (error) {
       console.error('Sohbet silinemedi', error);
-      alert('Sohbet silinirken bir hata oluştu.');
+      showToast('Sohbet silinirken bir hata oluştu.', 'error');
     }
   };
 

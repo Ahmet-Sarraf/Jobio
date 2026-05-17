@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Briefcase, Send, Target, Layers, X, Tag, AlignLeft, Clock, DollarSign } from 'lucide-react';
 import api from '@/lib/axios';
+import { useToastStore } from '@/store/useToastStore';
 
 const POPULAR_SKILLS = [
   'React', 'Node.js', 'TypeScript', 'Next.js', 'Python', 'Java', 'C#', 
@@ -15,6 +16,7 @@ const POPULAR_SKILLS = [
 
 export default function CreateJobPage() {
   const router = useRouter();
+  const { showToast } = useToastStore();
   
   // Temel Bilgiler
   const [title, setTitle] = useState('');
@@ -66,8 +68,8 @@ export default function CreateJobPage() {
 
       await api.post('/jobs', payload);
       
-      alert('İlanınız başarıyla yayınlandı!');
-      router.push('/jobs');
+      showToast('İlanınız başarıyla yayınlandı!', 'success');
+      router.push('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'İlan oluşturulurken bir hata meydana geldi.');
     } finally {

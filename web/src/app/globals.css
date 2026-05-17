@@ -1,13 +1,31 @@
 @import "tailwindcss";
 
+:root {
+  --brutal-bg: #fdfbf7;
+  --brutal-yellow: #ffc900;
+  --brutal-orange: #d97706;
+  --brutal-red: #ff4d4d;
+  --brutal-blue: #3b82f6;
+  --brutal-pink: #f472b6;
+}
+
+.theme-pastel {
+  --brutal-bg: #f9f8f6;
+  --brutal-yellow: #fef08a;
+  --brutal-orange: #fed7aa;
+  --brutal-red: #fecaca;
+  --brutal-blue: #bfdbfe;
+  --brutal-pink: #fbcfe8;
+}
+
 @theme inline {
   /* Neo-Brutalism Colors */
-  --color-brutal-bg: #fdfbf7;
-  --color-brutal-yellow: #ffc900;
-  --color-brutal-orange: #d97706;
-  --color-brutal-red: #ff4d4d;
-  --color-brutal-blue: #3b82f6;
-  --color-brutal-pink: #f472b6;
+  --color-brutal-bg: var(--brutal-bg);
+  --color-brutal-yellow: var(--brutal-yellow);
+  --color-brutal-orange: var(--brutal-orange);
+  --color-brutal-red: var(--brutal-red);
+  --color-brutal-blue: var(--brutal-blue);
+  --color-brutal-pink: var(--brutal-pink);
 
   /* Neo-Brutalism Shadows */
   --shadow-brutal: 4px 4px 0px 0px rgba(0,0,0,1);
@@ -29,3 +47,26 @@
     @apply outline-none shadow-brutal border-black;
   }
 }
+
+/* --- NEO-BRUTALIST WOW-FACTOR ADDITIONS --- */
+
+@keyframes brutalWobble {
+  0% { transform: rotate(-0.5deg) scale(1.01); }
+  100% { transform: rotate(0.5deg) scale(1.01); }
+}
+
+.hover-wobble:hover {
+  animation: brutalWobble 0.25s ease-in-out infinite alternate;
+}
+
+/* Hide scrollbar completely globally for a super clean native app feel */
+::-webkit-scrollbar {
+  display: none !important;
+}
+html, body {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+
+

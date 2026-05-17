@@ -10,7 +10,9 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       include: {
-        freelancerProfile: true,
+        freelancerProfile: {
+          include: { skills: true },
+        },
         customerProfile: true,
       },
     });
@@ -23,12 +25,13 @@ export class UsersService {
       name: user.name,
       role: user.role,
       avatarUrl: user.avatarUrl,
-      // CV ve Freelancer verileri FreelancerProfile'dan okunur
       cvUrl: user.freelancerProfile?.resumeUrl ?? null,
       company: user.customerProfile?.company ?? null,
       bio: user.freelancerProfile?.bio ?? null,
       hourlyRate: user.freelancerProfile?.hourlyRate ?? null,
       portfolioUrl: user.freelancerProfile?.portfolioUrl ?? null,
+      // Yapay zeka öneri sistemi için kullanıcının yetenekleri
+      skills: user.freelancerProfile?.skills ?? [],
     };
   }
 
@@ -58,12 +61,26 @@ export class UsersService {
       if (dto.hourlyRate !== undefined) freelancerData.hourlyRate = dto.hourlyRate;
       if (dto.portfolioUrl !== undefined) freelancerData.portfolioUrl = dto.portfolioUrl;
 
+      // Yetenekler gönderildiyse: önce tüm bağlantıları kaldır, sonra yenileri connectOrCreate ile ekle
+      if (dto.skills !== undefined) {
+        freelancerData.skills = {
+          set: [], // önce tüm mevcut bağlantıları temizle
+          connectOrCreate: dto.skills
+            .map((s) => s.toLowerCase().trim())
+            .filter((s) => s.length > 0)
+            .map((name) => ({
+              where: { name },
+              create: { name },
+            })),
+        };
+      }
+
       if (Object.keys(freelancerData).length > 0) {
         await this.prisma.freelancerProfile.update({
           where: { userId },
           data: freelancerData,
         });
-        
+
         if (freelancerData.resumeUrl !== undefined) updatedUser.freelancerProfile.resumeUrl = freelancerData.resumeUrl;
         if (freelancerData.bio !== undefined) updatedUser.freelancerProfile.bio = freelancerData.bio;
         if (freelancerData.hourlyRate !== undefined) updatedUser.freelancerProfile.hourlyRate = freelancerData.hourlyRate;
@@ -80,6 +97,12 @@ export class UsersService {
       updatedUser.customerProfile.company = dto.company;
     }
 
+    // Yetenekleri dönüş nesnesinden almak için taze profil çek
+    const freshProfile = await this.prisma.freelancerProfile.findUnique({
+      where: { userId },
+      include: { skills: true },
+    });
+
     return {
       id: updatedUser.id,
       email: updatedUser.email,
@@ -91,6 +114,7 @@ export class UsersService {
       bio: updatedUser.freelancerProfile?.bio ?? null,
       hourlyRate: updatedUser.freelancerProfile?.hourlyRate ?? null,
       portfolioUrl: updatedUser.freelancerProfile?.portfolioUrl ?? null,
+      skills: freshProfile?.skills ?? [],
     };
   }
 
