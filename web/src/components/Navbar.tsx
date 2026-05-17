@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LogOut, User as UserIcon, Briefcase, PlusCircle, Bell, X, CheckCheck, MessageSquare } from 'lucide-react';
+import { LogOut, User as UserIcon, Briefcase, PlusCircle, Bell, X, CheckCheck, MessageSquare, Palette } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import api from '@/lib/axios';
 
@@ -23,6 +23,28 @@ export default function Navbar() {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [theme, setTheme] = useState<'neo' | 'pastel'>('neo');
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('jobio-theme') as 'neo' | 'pastel';
+    if (savedTheme) {
+      setTheme(savedTheme);
+      if (savedTheme === 'pastel') {
+        document.documentElement.classList.add('theme-pastel');
+      }
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'neo' ? 'pastel' : 'neo';
+    setTheme(nextTheme);
+    localStorage.setItem('jobio-theme', nextTheme);
+    if (nextTheme === 'pastel') {
+      document.documentElement.classList.add('theme-pastel');
+    } else {
+      document.documentElement.classList.remove('theme-pastel');
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -95,7 +117,7 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 w-full border-b-[4px] border-black bg-white">
       <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 hover-wobble cursor-pointer">
             <div className="bg-brutal-yellow border-2 border-black p-1 rounded-sm shadow-brutal-sm">
               <Briefcase className="h-6 w-6 text-black" strokeWidth={2.5} />
             </div>
@@ -111,17 +133,29 @@ export default function Navbar() {
             <Link href="/freelancers" className="font-black text-black hover:underline decoration-4 underline-offset-4 decoration-brutal-pink transition-all">
               Freelancerlar
             </Link>
+            <Link href="/matchmaking" className="font-black text-black hover:underline decoration-4 underline-offset-4 decoration-brutal-yellow transition-all flex items-center gap-1 text-lg hover-wobble">
+              ✨ Sihirli Eşleşme
+            </Link>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-1.5 rounded-md bg-white px-3 py-2 text-xs sm:text-sm font-black text-black border-2 border-black shadow-brutal-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none hover-wobble transition-all"
+            title="Temayı Değiştir"
+          >
+            <Palette className="h-4 w-4 text-black" strokeWidth={2.5} />
+            <span className="hidden xs:inline uppercase">{theme === 'neo' ? 'PASTEL' : 'NEON'}</span>
+          </button>
+
           {!mounted ? (
             <div className="h-10 w-24 border-2 border-black rounded-md bg-gray-200" />
           ) : isAuthenticated ? (
             <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 href="/create-job"
-                className="hidden sm:flex items-center gap-1.5 rounded-md bg-brutal-yellow px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
+                className="hidden sm:flex items-center gap-1.5 rounded-md bg-brutal-yellow px-4 py-2 text-sm font-bold text-black border-2 border-black shadow-brutal hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all hover-wobble"
               >
                 <PlusCircle className="h-5 w-5" strokeWidth={2.5} />
                 <span>İlan Oluştur</span>
