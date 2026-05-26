@@ -144,7 +144,7 @@ export const RegisterScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.brutalRed,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -156,13 +156,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: typography.sizes.title,
-    fontWeight: 'bold',
+    fontWeight: '900',
     color: colors.text,
     marginBottom: spacing.xs,
   },
   subtitle: {
     fontSize: typography.sizes.md,
     color: colors.textSecondary,
+    fontWeight: '600',
   },
   formContainer: {
     width: '100%',
@@ -180,8 +181,8 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
   },
   link: {
-    color: colors.primary,
-    fontWeight: '600',
+    color: colors.secondary,
+    fontWeight: '800',
     fontSize: typography.sizes.md,
   },
 });
