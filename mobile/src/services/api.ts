@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { useAuthStore } from '../store/useAuthStore';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.252.214.165:3000';
 
@@ -29,10 +30,8 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response && error.response.status === 401) {
-      // Token is invalid or expired
-      // Log out user by removing token
-      await SecureStore.deleteItemAsync('user_token');
-      // Later we will use Zustand to change app state
+      // Token is invalid or expired, trigger logout in Zustand store
+      await useAuthStore.getState().logout();
     }
     return Promise.reject(error);
   }
