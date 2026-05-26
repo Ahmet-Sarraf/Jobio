@@ -27,20 +27,20 @@ export const Button = ({
   ...props
 }: ButtonProps) => {
   const getBackgroundColor = () => {
-    if (disabled) return colors.border;
+    if (disabled) return colors.textSecondary;
     if (variant === 'primary') return colors.primary;
     if (variant === 'secondary') return colors.secondary;
-    return 'transparent';
+    return colors.surface;
   };
 
   const getTextColor = () => {
-    if (variant === 'outline') return colors.primary;
-    if (disabled) return colors.textSecondary;
-    return colors.background;
+    if (disabled) return colors.surface;
+    return colors.text;
   };
 
   return (
     <TouchableOpacity
+      activeOpacity={0.8}
       style={[
         styles.button,
         { backgroundColor: getBackgroundColor() },
@@ -64,8 +64,12 @@ export const Button = ({
 
 const styles = StyleSheet.create({
   button: {
-    height: 48,
+    height: 52,
     borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderBottomWidth: 6,
+    borderRightWidth: 6,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -76,11 +80,10 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   outline: {
-    borderWidth: 1,
-    borderColor: colors.primary,
+    backgroundColor: colors.surface,
   },
   text: {
     fontSize: typography.sizes.md,
-    fontWeight: '600',
+    fontWeight: '800',
   },
 });
