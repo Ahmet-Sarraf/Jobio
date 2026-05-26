@@ -8,6 +8,11 @@ interface User {
   role: string | null;
   avatarUrl?: string | null;
   cvUrl?: string | null;
+  company?: string | null;
+  bio?: string | null;
+  hourlyRate?: number | null;
+  portfolioUrl?: string | null;
+  skills?: any[] | null;
 }
 
 interface AuthState {
