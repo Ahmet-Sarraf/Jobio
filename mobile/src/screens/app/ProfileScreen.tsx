@@ -48,6 +48,14 @@ const POPULAR_SKILLS = [
   'PostgreSQL', 'Docker', 'AWS', 'Figma', 'SEO',
 ];
 
+const CARD_COLORS = [
+  colors.brutalYellow,
+  colors.brutalPink,
+  '#86efac', // brutal green
+  '#93c5fd', // light brutal blue
+  '#fdba74', // light brutal orange
+];
+
 export const ProfileScreen = () => {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
@@ -765,8 +773,8 @@ export const ProfileScreen = () => {
               <Text style={styles.emptyText}>Reddedilen herhangi bir başvurunuz bulunmuyor.</Text>
             </View>
           ) : (
-            rejectedApps.map((app) => (
-              <View key={app.id} style={styles.jobCard}>
+            rejectedApps.map((app, idx) => (
+              <View key={app.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
                 <Text style={styles.jobTitle}>{app.job?.title}</Text>
                 <Text style={styles.jobMeta}>
                   İşveren: {app.job?.customer?.company || 'İsimsiz Şirket'}
@@ -813,10 +821,10 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Bekleme durumunda herhangi bir başvurunuz bulunmuyor.</Text>
           </View>
         ) : (
-          pendingApps.map((app) => (
+          pendingApps.map((app, idx) => (
             <TouchableOpacity
               key={app.id}
-              style={styles.jobCard}
+              style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}
               onPress={() => {
                 setSelectedApp(app);
                 setIsAppDetailModalOpen(true);
@@ -887,8 +895,8 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Üzerinizde devam eden aktif bir iş bulunmuyor.</Text>
           </View>
         ) : (
-          activeJobs.map((job) => (
-            <View key={job.id} style={styles.jobCard}>
+          activeJobs.map((job, idx) => (
+            <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
               <Text style={styles.jobTitle}>{job.title}</Text>
               <Text style={styles.jobMeta}>İşveren: {job.customer?.user?.name || 'Müşteri'}</Text>
               <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
@@ -1016,8 +1024,8 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Henüz aktif ilanınız yok.</Text>
           </View>
         ) : (
-          openJobs.map((job) => (
-            <View key={job.id} style={styles.jobCard}>
+          openJobs.map((job, idx) => (
+            <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
               <Text style={styles.jobTitle}>{job.title}</Text>
               <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
               <Text style={styles.jobMeta}>Kategori: {job.category || 'Belirtilmedi'}</Text>
@@ -1058,8 +1066,8 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Aktif yürütülen iş bulunmuyor.</Text>
           </View>
         ) : (
-          activeJobs.map((job) => (
-            <View key={job.id} style={styles.jobCard}>
+          activeJobs.map((job, idx) => (
+            <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
               <Text style={styles.jobTitle}>{job.title}</Text>
               <Text style={styles.jobMeta}>Freelancer: {job.freelancer?.user?.name || 'Atanmış Aday'}</Text>
               <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
@@ -1094,8 +1102,8 @@ export const ProfileScreen = () => {
               <Text style={styles.emptyText}>Henüz bitmiş projeniz bulunmuyor.</Text>
             </View>
           ) : (
-            completedJobs.map((job) => (
-              <View key={job.id} style={styles.jobCard}>
+            completedJobs.map((job, idx) => (
+              <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
                 <Text style={styles.jobTitle}>{job.title}</Text>
                 <Text style={styles.jobMeta}>Freelancer: {job.freelancer?.user?.name || 'Bilinmiyor'}</Text>
                 <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
@@ -1158,10 +1166,10 @@ export const ProfileScreen = () => {
               <Text style={styles.emptyText}>Henüz tamamlanmış bir işiniz bulunmuyor.</Text>
             </View>
           ) : (
-            completedJobs.map((job) => (
-              <View key={job.id} style={styles.reviewJobDetailCard}>
+            completedJobs.map((job, idx) => (
+              <View key={job.id} style={[styles.reviewJobDetailCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
                 {/* Header Container */}
-                <View style={styles.reviewCardHeader}>
+                <View style={[styles.reviewCardHeader, { backgroundColor: 'transparent' }]}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.reviewJobTitle}>{job.title || 'İsimsiz İş'}</Text>
                     <View style={styles.reviewMetaWrap}>
