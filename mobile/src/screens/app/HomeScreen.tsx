@@ -7,6 +7,13 @@ import { spacing, typography } from '../../theme/spacing';
 import { api } from '../../services/api';
 import { Briefcase, DollarSign, ChevronRight, Search, ArrowDown01, ArrowUp10 } from 'lucide-react-native';
 
+const CARD_COLORS = [
+  colors.brutalPink,
+  '#86efac', // brutal green
+  '#93c5fd', // light brutal blue
+  '#fdba74', // light brutal orange
+];
+
 export const HomeScreen = ({ navigation }: any) => {
   const user = useAuthStore((state) => state.user);
   const [jobs, setJobs] = useState<any[]>([]);
@@ -63,9 +70,9 @@ export const HomeScreen = ({ navigation }: any) => {
     else setSortOrder(null);
   };
 
-  const renderJobCard = ({ item }: { item: any }) => (
+  const renderJobCard = ({ item, index }: { item: any; index: number }) => (
     <TouchableOpacity 
-      style={styles.card} 
+      style={[styles.card, { backgroundColor: CARD_COLORS[index % CARD_COLORS.length] }]} 
       activeOpacity={0.7}
       onPress={() => navigation.navigate('JobDetails', { job: item })}
     >
