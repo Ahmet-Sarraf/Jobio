@@ -2,11 +2,13 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from '../screens/app/HomeScreen';
+import { FreelancersScreen } from '../screens/app/FreelancersScreen';
 import { CreateJobScreen } from '../screens/app/CreateJobScreen';
 import { ProfileScreen } from '../screens/app/ProfileScreen';
 import { JobDetailsScreen } from '../screens/app/JobDetailsScreen';
+import { FreelancerDetailsScreen } from '../screens/app/FreelancerDetailsScreen';
 import { colors } from '../theme/colors';
-import { Home, PlusCircle, User } from 'lucide-react-native';
+import { Home, PlusCircle, User, Users } from 'lucide-react-native';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -34,6 +36,14 @@ const MainTabs = () => {
         options={{ 
           title: 'Ana Sayfa',
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />
+        }}
+      />
+      <Tab.Screen 
+        name="Freelancers" 
+        component={FreelancersScreen} 
+        options={{ 
+          title: 'Yetenekler',
+          tabBarIcon: ({ color, size }) => <Users color={color} size={size} />
         }}
       />
       <Tab.Screen 
@@ -66,6 +76,15 @@ export const AppNavigator = () => {
         options={{ 
           headerShown: true, 
           title: 'İlan Detayı',
+          headerTintColor: colors.text,
+        }} 
+      />
+      <Stack.Screen 
+        name="FreelancerDetails" 
+        component={FreelancerDetailsScreen} 
+        options={{ 
+          headerShown: true, 
+          title: 'Freelancer Profili',
           headerTintColor: colors.text,
         }} 
       />
