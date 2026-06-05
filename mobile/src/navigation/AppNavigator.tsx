@@ -7,6 +7,8 @@ import { CreateJobScreen } from '../screens/app/CreateJobScreen';
 import { ProfileScreen } from '../screens/app/ProfileScreen';
 import { JobDetailsScreen } from '../screens/app/JobDetailsScreen';
 import { FreelancerDetailsScreen } from '../screens/app/FreelancerDetailsScreen';
+import { NotificationsScreen } from '../screens/app/NotificationsScreen';
+import { HeaderNotificationButton } from '../components/HeaderNotificationButton';
 import { colors } from '../theme/colors';
 import { Home, PlusCircle, User, Users } from 'lucide-react-native';
 
@@ -18,6 +20,7 @@ const MainTabs = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: true,
+        headerRight: () => <HeaderNotificationButton />,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
@@ -85,6 +88,15 @@ export const AppNavigator = () => {
         options={{ 
           headerShown: true, 
           title: 'Freelancer Profili',
+          headerTintColor: colors.text,
+        }} 
+      />
+      <Stack.Screen 
+        name="Notifications" 
+        component={NotificationsScreen} 
+        options={{ 
+          headerShown: true, 
+          title: 'Bildirimler',
           headerTintColor: colors.text,
         }} 
       />
