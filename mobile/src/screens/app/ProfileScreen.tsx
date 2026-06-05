@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
 import { Button } from '../../components/Button';
@@ -57,6 +58,7 @@ const CARD_COLORS = [
 ];
 
 export const ProfileScreen = () => {
+  const navigation = useNavigation<any>();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const updateUserProfile = useAuthStore((state) => state.updateUserProfile);
@@ -926,7 +928,7 @@ export const ProfileScreen = () => {
             <Text style={styles.backBtnText}>← İlanlarıma Geri Dön</Text>
           </TouchableOpacity>
 
-          <Text style={styles.tabHeading}>{selectedJob.title} - Aday Başvuruları</Text>
+          <Text style={styles.tabHeading}>{selectedJob.title} - Aday Başvuruları ({jobApplications.length})</Text>
 
           {loadingJobDetails ? (
             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
@@ -938,7 +940,11 @@ export const ProfileScreen = () => {
           ) : (
             jobApplications.map((app) => (
               <View key={app.id} style={styles.applicantCard}>
-                <View style={styles.applicantHeader}>
+                <TouchableOpacity
+                  style={styles.applicantHeader}
+                  onPress={() => navigation.navigate('FreelancerDetails', { freelancerId: app.freelancerId })}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.applicantAvatar}>
                     {app.freelancer?.user?.avatarUrl ? (
                       <Image
@@ -953,7 +959,8 @@ export const ProfileScreen = () => {
                     <Text style={styles.applicantName}>{app.freelancer?.user?.name || 'İsimsiz'}</Text>
                     <Text style={styles.applicantEmail}>{app.freelancer?.user?.email}</Text>
                   </View>
-                </View>
+                  <ExternalLink size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
 
                 {app.freelancer?.skills && app.freelancer.skills.length > 0 && (
                   <View style={[styles.tagsContainer, { marginTop: spacing.sm }]}>
@@ -1031,6 +1038,9 @@ export const ProfileScreen = () => {
               <Text style={styles.jobMeta}>Kategori: {job.category || 'Belirtilmedi'}</Text>
               <Text style={styles.jobMeta}>
                 Tarih: {new Date(job.createdAt).toLocaleDateString('tr-TR')}
+              </Text>
+              <Text style={styles.jobMeta}>
+                Başvuru Sayısı: {job._count?.applications ?? 0}
               </Text>
 
               <View style={styles.cardActionsRow}>
