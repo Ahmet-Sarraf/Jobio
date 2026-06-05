@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { decode } from 'base64-arraybuffer';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
 import { Button } from '../../components/Button';
@@ -48,7 +49,16 @@ const POPULAR_SKILLS = [
   'PostgreSQL', 'Docker', 'AWS', 'Figma', 'SEO',
 ];
 
+const CARD_COLORS = [
+  colors.brutalYellow,
+  colors.brutalPink,
+  '#86efac', // brutal green
+  '#93c5fd', // light brutal blue
+  '#fdba74', // light brutal orange
+];
+
 export const ProfileScreen = () => {
+  const navigation = useNavigation<any>();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const updateUserProfile = useAuthStore((state) => state.updateUserProfile);
@@ -765,8 +775,8 @@ export const ProfileScreen = () => {
               <Text style={styles.emptyText}>Reddedilen herhangi bir başvurunuz bulunmuyor.</Text>
             </View>
           ) : (
-            rejectedApps.map((app) => (
-              <View key={app.id} style={styles.jobCard}>
+            rejectedApps.map((app, idx) => (
+              <View key={app.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
                 <Text style={styles.jobTitle}>{app.job?.title}</Text>
                 <Text style={styles.jobMeta}>
                   İşveren: {app.job?.customer?.company || 'İsimsiz Şirket'}
@@ -813,10 +823,10 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Bekleme durumunda herhangi bir başvurunuz bulunmuyor.</Text>
           </View>
         ) : (
-          pendingApps.map((app) => (
+          pendingApps.map((app, idx) => (
             <TouchableOpacity
               key={app.id}
-              style={styles.jobCard}
+              style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}
               onPress={() => {
                 setSelectedApp(app);
                 setIsAppDetailModalOpen(true);
@@ -887,8 +897,8 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Üzerinizde devam eden aktif bir iş bulunmuyor.</Text>
           </View>
         ) : (
-          activeJobs.map((job) => (
-            <View key={job.id} style={styles.jobCard}>
+          activeJobs.map((job, idx) => (
+            <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
               <Text style={styles.jobTitle}>{job.title}</Text>
               <Text style={styles.jobMeta}>İşveren: {job.customer?.user?.name || 'Müşteri'}</Text>
               <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
@@ -918,7 +928,7 @@ export const ProfileScreen = () => {
             <Text style={styles.backBtnText}>← İlanlarıma Geri Dön</Text>
           </TouchableOpacity>
 
-          <Text style={styles.tabHeading}>{selectedJob.title} - Aday Başvuruları</Text>
+          <Text style={styles.tabHeading}>{selectedJob.title} - Aday Başvuruları ({jobApplications.length})</Text>
 
           {loadingJobDetails ? (
             <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
@@ -930,7 +940,11 @@ export const ProfileScreen = () => {
           ) : (
             jobApplications.map((app) => (
               <View key={app.id} style={styles.applicantCard}>
-                <View style={styles.applicantHeader}>
+                <TouchableOpacity
+                  style={styles.applicantHeader}
+                  onPress={() => navigation.navigate('FreelancerDetails', { freelancerId: app.freelancerId })}
+                  activeOpacity={0.7}
+                >
                   <View style={styles.applicantAvatar}>
                     {app.freelancer?.user?.avatarUrl ? (
                       <Image
@@ -945,7 +959,8 @@ export const ProfileScreen = () => {
                     <Text style={styles.applicantName}>{app.freelancer?.user?.name || 'İsimsiz'}</Text>
                     <Text style={styles.applicantEmail}>{app.freelancer?.user?.email}</Text>
                   </View>
-                </View>
+                  <ExternalLink size={16} color={colors.textSecondary} />
+                </TouchableOpacity>
 
                 {app.freelancer?.skills && app.freelancer.skills.length > 0 && (
                   <View style={[styles.tagsContainer, { marginTop: spacing.sm }]}>
@@ -1016,13 +1031,16 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Henüz aktif ilanınız yok.</Text>
           </View>
         ) : (
-          openJobs.map((job) => (
-            <View key={job.id} style={styles.jobCard}>
+          openJobs.map((job, idx) => (
+            <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
               <Text style={styles.jobTitle}>{job.title}</Text>
               <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
               <Text style={styles.jobMeta}>Kategori: {job.category || 'Belirtilmedi'}</Text>
               <Text style={styles.jobMeta}>
                 Tarih: {new Date(job.createdAt).toLocaleDateString('tr-TR')}
+              </Text>
+              <Text style={styles.jobMeta}>
+                Başvuru Sayısı: {job._count?.applications ?? 0}
               </Text>
 
               <View style={styles.cardActionsRow}>
@@ -1058,8 +1076,8 @@ export const ProfileScreen = () => {
             <Text style={styles.emptyText}>Aktif yürütülen iş bulunmuyor.</Text>
           </View>
         ) : (
-          activeJobs.map((job) => (
-            <View key={job.id} style={styles.jobCard}>
+          activeJobs.map((job, idx) => (
+            <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
               <Text style={styles.jobTitle}>{job.title}</Text>
               <Text style={styles.jobMeta}>Freelancer: {job.freelancer?.user?.name || 'Atanmış Aday'}</Text>
               <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
@@ -1094,8 +1112,8 @@ export const ProfileScreen = () => {
               <Text style={styles.emptyText}>Henüz bitmiş projeniz bulunmuyor.</Text>
             </View>
           ) : (
-            completedJobs.map((job) => (
-              <View key={job.id} style={styles.jobCard}>
+            completedJobs.map((job, idx) => (
+              <View key={job.id} style={[styles.jobCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
                 <Text style={styles.jobTitle}>{job.title}</Text>
                 <Text style={styles.jobMeta}>Freelancer: {job.freelancer?.user?.name || 'Bilinmiyor'}</Text>
                 <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
@@ -1158,10 +1176,10 @@ export const ProfileScreen = () => {
               <Text style={styles.emptyText}>Henüz tamamlanmış bir işiniz bulunmuyor.</Text>
             </View>
           ) : (
-            completedJobs.map((job) => (
-              <View key={job.id} style={styles.reviewJobDetailCard}>
+            completedJobs.map((job, idx) => (
+              <View key={job.id} style={[styles.reviewJobDetailCard, { backgroundColor: CARD_COLORS[idx % CARD_COLORS.length] }]}>
                 {/* Header Container */}
-                <View style={styles.reviewCardHeader}>
+                <View style={[styles.reviewCardHeader, { backgroundColor: 'transparent' }]}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.reviewJobTitle}>{job.title || 'İsimsiz İş'}</Text>
                     <View style={styles.reviewMetaWrap}>
