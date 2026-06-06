@@ -93,7 +93,8 @@ Sort the array descending by matchScore. Only return the top 10 matches if there
     try {
       const model = this.getGenAIModel();
       const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
+      let responseText = result.response.text();
+      responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(responseText);
     } catch (error: any) {
       console.error('Gemini AI error (matchFreelancersForJob):', error);
@@ -174,7 +175,8 @@ Sort the array descending by matchScore. Only return the top 10 matches if there
     try {
       const model = this.getGenAIModel();
       const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
+      let responseText = result.response.text();
+      responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
       return JSON.parse(responseText);
     } catch (error: any) {
       console.error('Gemini AI error (matchJobsForFreelancer):', error);
