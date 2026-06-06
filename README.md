@@ -66,7 +66,14 @@ Jobio/
 │           ├── axios.ts      # Axios instance (JWT interceptor)
 │           └── socket.ts     # Socket.io client helper
 │
-└── mobile/           # (Geliştirme aşamasında)
+└── mobile/           # Expo React Native Mobil Uygulama
+    ├── src/
+    │   ├── components/   # Ortak UI bileşenleri (Button, Input, vb.)
+    │   ├── navigation/   # Navigasyon yönlendiricileri (Tab & Stack)
+    │   ├── screens/      # Uygulama ekranları (Chat, Profile, İlanlar, vb.)
+    │   ├── services/     # API (Axios) ve WebSocket (Socket.io) servisleri
+    │   ├── store/        # Zustand global state yönetimi
+    │   └── theme/        # Global Neobrutalist renk ve stil şeması
 ```
 
 ---
@@ -117,6 +124,19 @@ Notification (userId → User)
 | Socket.io Client | 4 | WebSocket bağlantısı |
 | Lucide React | — | İkon kütüphanesi |
 | Outfit (Google Fonts) | — | Tipografi |
+
+### Mobil (React Native / Expo)
+| Teknoloji | Versiyon | Kullanım |
+|-----------|----------|----------|
+| Expo | 54 | Mobil uygulama iskeleti |
+| React Native | 0.81 | Yerel uygulama motoru |
+| React Navigation | 7 | Ekranlar arası geçiş ve menüler |
+| Zustand | 5 | Global state yönetimi |
+| Axios | — | HTTP API istekleri |
+| Socket.io Client | 4 | Gerçek zamanlı chat bağlantısı |
+| Expo Image | 3 | Yüksek performanslı görsel önbellekleme |
+| React Hook Form & Zod | — | Form validasyonu ve doğrulama |
+| Lucide React Native | — | Uygulama içi ikonlar |
 
 ---
 
@@ -189,6 +209,25 @@ npm run dev
 
 > Frontend `http://localhost:3001` adresinde çalışır.
 
+### 4. Mobil (Expo) Kurulumu
+```bash
+cd mobile
+npm install
+```
+
+`mobile/.env` dosyası oluşturun:
+```env
+EXPO_PUBLIC_API_URL="http://<yerel-ip-adresiniz>:3000"
+EXPO_PUBLIC_SUPABASE_URL="https://xxx.supabase.co"
+EXPO_PUBLIC_SUPABASE_ANON_KEY="eyJ..."
+```
+> ⚠️ **Önemli:** Telefonda test ederken `localhost` veya `127.0.0.1` yerine bilgisayarınızın yerel ağ IP adresini (örn: `192.168.1.34`) yazmalısınız.
+
+```bash
+npm run start
+```
+> Mobil geliştirme arayüzü (Expo Metro Bundler) başlar. Terminaldeki QR kodu Expo Go uygulaması ile okutarak testi başlatabilirsiniz.
+
 ---
 
 ## 📡 API Endpoints (Özet)
@@ -243,6 +282,13 @@ JWT_SECRET            # JWT imzalama anahtarı
 NEXT_PUBLIC_SUPABASE_URL       # Supabase proje URL'i
 NEXT_PUBLIC_SUPABASE_ANON_KEY  # Supabase anon/public key
 NEXT_PUBLIC_API_URL            # Backend API adresi
+```
+
+### Mobil (`mobile/.env`)
+```
+EXPO_PUBLIC_API_URL            # Backend API adresi (Yerel IP adresi olmalı)
+EXPO_PUBLIC_SUPABASE_URL       # Supabase proje URL'i
+EXPO_PUBLIC_SUPABASE_ANON_KEY  # Supabase anon/public key
 ```
 
 ---
