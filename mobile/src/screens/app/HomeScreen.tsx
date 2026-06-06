@@ -140,6 +140,9 @@ export const HomeScreen = ({ navigation }: any) => {
         renderItem={renderJobCard}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={5}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}

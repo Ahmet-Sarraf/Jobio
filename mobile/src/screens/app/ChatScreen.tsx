@@ -10,9 +10,9 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-  SafeAreaView,
-  Image
+  SafeAreaView
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
@@ -306,6 +306,9 @@ export const ChatScreen = ({ route, navigation }: any) => {
           renderItem={renderMessageItem}
           contentContainerStyle={styles.messagesList}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
           onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
         />
