@@ -8,9 +8,11 @@ import { ProfileScreen } from '../screens/app/ProfileScreen';
 import { JobDetailsScreen } from '../screens/app/JobDetailsScreen';
 import { FreelancerDetailsScreen } from '../screens/app/FreelancerDetailsScreen';
 import { NotificationsScreen } from '../screens/app/NotificationsScreen';
+import { ConversationsScreen } from '../screens/app/ConversationsScreen';
+import { ChatScreen } from '../screens/app/ChatScreen';
 import { HeaderNotificationButton } from '../components/HeaderNotificationButton';
 import { colors } from '../theme/colors';
-import { Home, PlusCircle, User, Users } from 'lucide-react-native';
+import { Home, PlusCircle, User, Users, MessageSquare } from 'lucide-react-native';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -58,6 +60,14 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen 
+        name="Conversations" 
+        component={ConversationsScreen} 
+        options={{ 
+          title: 'Mesajlar',
+          tabBarIcon: ({ color, size }) => <MessageSquare color={color} size={size} />
+        }}
+      />
+      <Tab.Screen 
         name="Profile" 
         component={ProfileScreen} 
         options={{ 
@@ -97,6 +107,15 @@ export const AppNavigator = () => {
         options={{ 
           headerShown: true, 
           title: 'Bildirimler',
+          headerTintColor: colors.text,
+        }} 
+      />
+      <Stack.Screen 
+        name="Chat" 
+        component={ChatScreen} 
+        options={{ 
+          headerShown: true, 
+          title: 'Sohbet',
           headerTintColor: colors.text,
         }} 
       />

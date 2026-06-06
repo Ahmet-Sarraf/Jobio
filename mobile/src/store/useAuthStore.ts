@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 
+import { disconnectSocket } from '../services/socket';
+
 interface User {
   id: string;
   email: string;
@@ -39,6 +41,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    disconnectSocket();
     await SecureStore.deleteItemAsync('user_token');
     await SecureStore.deleteItemAsync('user_data');
     set({ user: null, token: null, isAuthenticated: false });
