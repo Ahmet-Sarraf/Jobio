@@ -1082,13 +1082,9 @@ export const ProfileScreen = () => {
               <Text style={styles.jobMeta}>Freelancer: {job.freelancer?.user?.name || 'Atanmış Aday'}</Text>
               <Text style={styles.jobMeta}>Bütçe: {job.budget?.toLocaleString()} ₺</Text>
 
-              <View style={styles.cardActionsRow}>
-                <TouchableOpacity
-                  style={[styles.cardBtn, { backgroundColor: colors.success, flex: 1 }]}
-                  onPress={() => startCompleteJobFlow(job.id)}
-                >
-                  <Text style={styles.cardBtnText}>İşi Tamamla & Değerlendir</Text>
-                </TouchableOpacity>
+              <View style={styles.waitingStatusContainer}>
+                <Clock size={14} color="#000" />
+                <Text style={styles.waitingStatusText}>Freelancer'ın işi tamamlaması bekleniyor</Text>
               </View>
             </View>
           ))
@@ -2242,5 +2238,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderTopColor: '#000',
     backgroundColor: '#fff',
+  },
+  waitingStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#000',
+    padding: spacing.sm,
+    borderRadius: 6,
+    marginTop: spacing.sm,
+  },
+  waitingStatusText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#000',
   },
 });
