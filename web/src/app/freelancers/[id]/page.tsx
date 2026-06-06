@@ -6,6 +6,7 @@ import { User, Star, Briefcase, FileText, Link as LinkIcon, MessageSquare, Downl
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import { useToastStore } from '@/store/useToastStore';
+import Image from 'next/image';
 
 export default function FreelancerProfile({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -90,7 +91,7 @@ export default function FreelancerProfile({ params }: { params: Promise<{ id: st
             <div className="bg-white border-[4px] border-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] p-8 text-center">
               <div className="relative mx-auto h-40 w-40 rounded-full border-[4px] border-black bg-brutal-yellow overflow-hidden mb-6 flex items-center justify-center shadow-brutal -rotate-3 hover:rotate-0 transition-transform">
                 {freelancer.avatarUrl ? (
-                  <img src={freelancer.avatarUrl} alt={freelancer.name} className="h-full w-full object-cover" />
+                  <Image src={freelancer.avatarUrl} alt={freelancer.name} width={160} height={160} className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-6xl font-black">{freelancer.name?.charAt(0)}</span>
                 )}
