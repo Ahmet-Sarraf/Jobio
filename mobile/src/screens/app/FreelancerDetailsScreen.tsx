@@ -157,10 +157,10 @@ export const FreelancerDetailsScreen = ({ route, navigation }: any) => {
             </TouchableOpacity>
           ) : null}
 
-          {isAuthenticated && user?.role === 'CUSTOMER' && freelancer.cvUrl ? (
+          {isAuthenticated && user?.role === 'CUSTOMER' && freelancer.resumeUrl ? (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: colors.brutalPink }]}
-              onPress={() => Linking.openURL(freelancer.cvUrl)}
+              onPress={() => Linking.openURL(freelancer.resumeUrl)}
             >
               <FileText size={18} color="#000" style={styles.btnIcon} />
               <Text style={[styles.actionBtnText, { color: '#000' }]}>CV'yi Görüntüle</Text>

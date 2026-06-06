@@ -1,4 +1,5 @@
 import React from 'react';
+import { View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { HomeScreen } from '../screens/app/HomeScreen';
@@ -10,7 +11,9 @@ import { FreelancerDetailsScreen } from '../screens/app/FreelancerDetailsScreen'
 import { NotificationsScreen } from '../screens/app/NotificationsScreen';
 import { ConversationsScreen } from '../screens/app/ConversationsScreen';
 import { ChatScreen } from '../screens/app/ChatScreen';
+import { MatchmakingScreen } from '../screens/app/MatchmakingScreen';
 import { HeaderNotificationButton } from '../components/HeaderNotificationButton';
+import { HeaderMatchmakingButton } from '../components/HeaderMatchmakingButton';
 import { colors } from '../theme/colors';
 import { Home, PlusCircle, User, Users, MessageSquare } from 'lucide-react-native';
 
@@ -22,7 +25,12 @@ const MainTabs = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: true,
-        headerRight: () => <HeaderNotificationButton />,
+        headerRight: () => (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <HeaderMatchmakingButton />
+            <HeaderNotificationButton />
+          </View>
+        ),
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
@@ -83,6 +91,15 @@ export const AppNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={MainTabs} />
+      <Stack.Screen 
+        name="Matchmaking" 
+        component={MatchmakingScreen} 
+        options={{ 
+          headerShown: true, 
+          title: 'Sihirli Eşleşme',
+          headerTintColor: colors.text,
+        }} 
+      />
       <Stack.Screen 
         name="JobDetails" 
         component={JobDetailsScreen} 

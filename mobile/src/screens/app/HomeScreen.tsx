@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { colors } from '../../theme/colors';
@@ -78,7 +79,13 @@ export const HomeScreen = ({ navigation }: any) => {
     >
       <View style={styles.cardHeader}>
         <View style={styles.cardIconContainer}>
-          <Briefcase size={20} color={colors.primary} />
+          {item.customer?.user?.avatarUrl ? (
+            <Image source={{ uri: item.customer.user.avatarUrl }} style={styles.avatarImage as any} />
+          ) : (
+            <Text style={styles.avatarText}>
+              {item.customer?.user?.name ? item.customer.user.name.charAt(0).toUpperCase() : 'J'}
+            </Text>
+          )}
         </View>
         <View style={styles.cardTitleContainer}>
           <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
@@ -238,13 +245,23 @@ const styles = StyleSheet.create({
   cardIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 8,
-    backgroundColor: colors.primary,
+    borderRadius: 20,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
     borderWidth: 2,
     borderColor: colors.border,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: colors.text,
   },
   cardTitleContainer: {
     flex: 1,
