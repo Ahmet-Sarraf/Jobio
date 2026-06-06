@@ -831,7 +831,7 @@ function MyJobsTab() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                     <div className="flex items-center gap-4">
                       {app.freelancer?.user?.avatarUrl ? (
-                        <img src={app.freelancer.user.avatarUrl} alt="Avatar" className="h-14 w-14 border-[3px] border-black object-cover shrink-0" />
+                        <Image src={app.freelancer.user.avatarUrl} alt="Avatar" width={56} height={56} className="h-14 w-14 border-[3px] border-black object-cover shrink-0" />
                       ) : (
                         <div className="h-14 w-14 bg-white border-[3px] border-black flex items-center justify-center text-black font-black text-2xl shrink-0">
                           {app.freelancer?.user?.name?.charAt(0) || '?'}
@@ -1527,7 +1527,7 @@ function CustomerActiveJobsTab() {
                       {freelancer && (
                         <div className="flex items-center gap-3 mb-4 bg-white border-2 border-black p-3 shadow-brutal-sm">
                           {freelancer.user?.avatarUrl ? (
-                            <img src={freelancer.user.avatarUrl} alt="Avatar" className="h-12 w-12 border-2 border-black object-cover shrink-0" />
+                            <Image src={freelancer.user.avatarUrl} alt="Avatar" width={48} height={48} className="h-12 w-12 border-2 border-black object-cover shrink-0" />
                           ) : (
                             <div className="h-12 w-12 bg-green-400 border-2 border-black flex items-center justify-center text-black font-black text-xl shrink-0">
                               {freelancer.user?.name?.charAt(0) || '?'}

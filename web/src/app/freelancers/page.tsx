@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import api from '@/lib/axios';
 import { Star, Search, Filter, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import Image from 'next/image';
 
 export default function FreelancersPage() {
   const [freelancers, setFreelancers] = useState<any[]>([]);
@@ -125,9 +126,9 @@ export default function FreelancersPage() {
                 className={`border-[4px] border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col h-full ${cardColors[idx % cardColors.length]}`}
               >
                 <div className="flex flex-col items-center mb-4">
-                  <div className="h-24 w-24 rounded-full border-[3px] border-black bg-white overflow-hidden mb-4 shadow-brutal-sm">
+                  <div className="h-24 w-24 rounded-full border-[3px] border-black bg-white overflow-hidden mb-4 shadow-brutal-sm relative">
                     {freelancer.avatarUrl ? (
-                      <img src={freelancer.avatarUrl} alt={freelancer.name} className="h-full w-full object-cover" />
+                      <Image src={freelancer.avatarUrl} alt={freelancer.name || 'Avatar'} width={96} height={96} className="h-full w-full object-cover" />
                     ) : (
                       <div className="h-full w-full flex items-center justify-center bg-gray-200">
                         <User className="w-12 h-12 text-gray-400" />

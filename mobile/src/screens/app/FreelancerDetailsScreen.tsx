@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   ActivityIndicator,
   TouchableOpacity,
   Linking,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
 import { api } from '../../services/api';

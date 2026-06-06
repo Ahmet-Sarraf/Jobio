@@ -1,6 +1,7 @@
 'use client';
 
 import { User as UserIcon } from 'lucide-react';
+import Image from 'next/image';
 
 interface ChatSidebarProps {
   conversations: any[];
@@ -29,9 +30,9 @@ export default function ChatSidebar({ conversations, activeChat, setActiveChat, 
                 className={`w-full text-left p-4 border-b-[3px] border-black hover:bg-brutal-pink transition-colors ${activeChat?.id === conv.id ? 'bg-brutal-pink' : 'bg-white'}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center overflow-hidden border-2 border-white">
+                  <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center overflow-hidden border-2 border-white relative">
                     {otherUser?.avatarUrl ? (
-                       <img src={otherUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                       <Image src={otherUser.avatarUrl} alt="Avatar" width={48} height={48} className="w-full h-full object-cover" />
                     ) : (
                        <UserIcon className="text-white w-6 h-6" />
                     )}

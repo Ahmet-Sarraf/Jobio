@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
 import { Button } from '../../components/Button';

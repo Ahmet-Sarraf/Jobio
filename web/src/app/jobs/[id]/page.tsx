@@ -6,6 +6,7 @@ import api from '@/lib/axios';
 import { useAuthStore } from '@/store/useAuthStore';
 import { Clock, Building, ArrowLeft, Send, Tag, Briefcase, BarChart, CalendarDays, CheckCircle2, BadgeCheck, AlertCircle, X, Trash2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Skill {
   id: string;
@@ -357,7 +358,7 @@ export default function JobDetailsPage() {
                 
                 <div className="flex items-center gap-5 mb-6 bg-[#fcfaf2] border-2 border-black p-4 shadow-brutal-sm">
                   {job.customer?.user?.avatarUrl ? (
-                    <img src={job.customer.user.avatarUrl} alt="Avatar" className="h-16 w-16 border-4 border-black object-cover" />
+                    <Image src={job.customer.user.avatarUrl} alt="Avatar" width={64} height={64} className="h-16 w-16 border-4 border-black object-cover" />
                   ) : (
                     <div className="h-16 w-16 bg-brutal-yellow flex items-center justify-center text-black font-black text-2xl border-4 border-black">
                       {job.customer?.user?.name?.charAt(0) || 'U'}

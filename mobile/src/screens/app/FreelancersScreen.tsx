@@ -7,9 +7,9 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Image,
   RefreshControl,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
 import { spacing, typography } from '../../theme/spacing';
@@ -193,6 +193,9 @@ export const FreelancersScreen = ({ navigation }: any) => {
           renderItem={renderFreelancerCard}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
