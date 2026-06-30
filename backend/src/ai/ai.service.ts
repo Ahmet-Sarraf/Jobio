@@ -233,10 +233,10 @@ Respond EXACTLY with a JSON object in the following format, nothing else. Do not
       const model = this.getGenAIModel();
       const result = await model.generateContent(prompt);
       let responseText = result.response.text();
-      
+
       // Temizleme: Eğer API markdown formatında dönerse temizle
       responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-      
+
       const evaluation = JSON.parse(responseText);
 
       await this.prisma.application.update({
