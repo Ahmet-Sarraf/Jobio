@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import api from '@/lib/axios';
 import { User, Mail, Camera, Building, AlertCircle, CheckCircle2, Save, Settings, Briefcase, Users, MessageSquare, X, FileText, Star, Link as LinkIcon, Upload, Clock, Trash2, Tag } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useToastStore } from '@/store/useToastStore';
 
@@ -830,13 +831,15 @@ function MyJobsTab() {
                 <div key={app.id} className={`${cardColors[i % cardColors.length]} ${i % 2 === 0 ? 'rotate-[0.4deg]' : '-rotate-[0.4deg]'} border-[3px] border-black shadow-brutal p-6 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all`}>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
                     <div className="flex items-center gap-4">
-                      {app.freelancer?.user?.avatarUrl ? (
-                        <Image src={app.freelancer.user.avatarUrl} alt="Avatar" width={56} height={56} className="h-14 w-14 border-[3px] border-black object-cover shrink-0" />
-                      ) : (
-                        <div className="h-14 w-14 bg-white border-[3px] border-black flex items-center justify-center text-black font-black text-2xl shrink-0">
-                          {app.freelancer?.user?.name?.charAt(0) || '?'}
-                        </div>
-                      )}
+                      <Link href={`/freelancers/${app.freelancerId}`} className="hover:opacity-80 transition-all shrink-0 hover:scale-105 duration-200">
+                        {app.freelancer?.user?.avatarUrl ? (
+                          <Image src={app.freelancer.user.avatarUrl} alt="Avatar" width={56} height={56} className="h-14 w-14 border-[3px] border-black object-cover shrink-0" />
+                        ) : (
+                          <div className="h-14 w-14 bg-white border-[3px] border-black flex items-center justify-center text-black font-black text-2xl shrink-0">
+                            {app.freelancer?.user?.name?.charAt(0) || '?'}
+                          </div>
+                        )}
+                      </Link>
                       <div>
                         <p className="text-xl font-black uppercase text-black">{app.freelancer?.user?.name || 'İsimsiz'}</p>
                         <p className="text-sm font-bold text-black/70">{app.freelancer?.user?.email || ''}</p>
@@ -1526,13 +1529,15 @@ function CustomerActiveJobsTab() {
                       {/* Kabul edilen freelancer bilgisi */}
                       {freelancer && (
                         <div className="flex items-center gap-3 mb-4 bg-white border-2 border-black p-3 shadow-brutal-sm">
-                          {freelancer.user?.avatarUrl ? (
-                            <Image src={freelancer.user.avatarUrl} alt="Avatar" width={48} height={48} className="h-12 w-12 border-2 border-black object-cover shrink-0" />
-                          ) : (
-                            <div className="h-12 w-12 bg-green-400 border-2 border-black flex items-center justify-center text-black font-black text-xl shrink-0">
-                              {freelancer.user?.name?.charAt(0) || '?'}
-                            </div>
-                          )}
+                          <Link href={`/freelancers/${freelancer.id}`} className="hover:opacity-80 transition-all shrink-0 hover:scale-105 duration-200">
+                            {freelancer.user?.avatarUrl ? (
+                              <Image src={freelancer.user.avatarUrl} alt="Avatar" width={48} height={48} className="h-12 w-12 border-2 border-black object-cover shrink-0" />
+                            ) : (
+                              <div className="h-12 w-12 bg-green-400 border-2 border-black flex items-center justify-center text-black font-black text-xl shrink-0">
+                                {freelancer.user?.name?.charAt(0) || '?'}
+                              </div>
+                            )}
+                          </Link>
                           <div>
                             <p className="font-black text-black uppercase text-sm">{freelancer.user?.name || 'İsimsiz'}</p>
                             <p className="text-xs font-bold text-black/60">{freelancer.user?.email || ''}</p>
